@@ -6,3 +6,5 @@ lib/
 storage/config/
 
 scripts/
+
+*.cfg
