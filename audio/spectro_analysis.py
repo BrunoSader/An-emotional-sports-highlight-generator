@@ -41,3 +41,10 @@ if __name__ =='__main__' :
     plt.plot(fbank_feat[:, 0])
     plt.plot(fbank_feat_av_0)
     plt.show()'''
+
+    firstChannel = sig[:,0]
+    f, t, Spectro = signal.spectrogram(firstChannel, rate)
+    plt.pcolormesh(t, f, Spectro)
+    plt.ylabel('Frequency [Hz]')
+    plt.xlabel('Time [sec]')
+    plt.show()
