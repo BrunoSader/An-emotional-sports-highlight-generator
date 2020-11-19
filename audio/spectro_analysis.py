@@ -4,6 +4,8 @@ from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from python_speech_features import mfcc, logfbank, get_filterbanks
 import scipy.io.wavfile as wav
 import matplotlib.pyplot as plt
+from scipy import signal
+import matplotlib.colors as colors
 
 from scipy.cluster.vq import kmeans, vq
 
@@ -43,8 +45,8 @@ if __name__ =='__main__' :
     plt.show()'''
 
     firstChannel = sig[:,0]
-    f, t, Spectro = signal.spectrogram(firstChannel, rate)
-    plt.pcolormesh(t, f, Spectro)
+    f, t, spectro = signal.spectrogram(firstChannel, rate)
+    plt.pcolormesh(t, f, spectro, norm=colors.PowerNorm(gamma=0.2))
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
     plt.show()
