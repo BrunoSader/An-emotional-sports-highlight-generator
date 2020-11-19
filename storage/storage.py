@@ -42,3 +42,8 @@ def get_video(storage_client, bucketName='football_matches', blobName='epl/2016-
     blob = bucket.get_blob(blobName)
     blob.download_to_filename(savePath)
 
+
+if __name__=='__main__' :
+    client = connect_db()
+    get_video(client, blobName='epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/2.mkv')
+    video_to_audio()
