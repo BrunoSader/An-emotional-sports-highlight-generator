@@ -14,3 +14,7 @@ audio/__pycache__
 scripts/
 
 *.cfg
+
+.vscode/
+
+lib64
