@@ -1,4 +1,4 @@
-from preprocessing import movingaverage
+from preprocessing import movingaverage, zero_runs
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from moviepy.editor import VideoFileClip, concatenate_videoclips
@@ -11,37 +11,27 @@ import matplotlib.colors as colors
 from scipy.cluster.vq import kmeans, vq
 
 
-def trim_video(video, cluster_indices):
-    video_index = 1;
+def trim_video(video, indices):
+    video_index = 0
     
-    for i in range(len(cluster_indices)):
-        while cluster_indices[i]==1:
-            i+=1
-        start_index = i
-        i+=1
-        while cluster_indices[i]==0:
-            i+=1
-        stop_index = i-1
-        
+    for start_index, stop_index in indices:
         start_index=start_index/40
         stop_index=stop_index/40
         
-        if(stop_index - start_index > 2):
+        if(stop_index - start_index >= 5):
             ffmpeg_extract_subclip(video, start_index, stop_index, targetname='storage/trim/video'+str(video_index)+'.mkv')
             video_index+=1
-    
-        i+=1
         
     return video_index
 
 
 def concat_video(video_index):
     videos=[]
-    for i in video_index:
-        videos[i]= VideoFileClip('video'+str(i)+'.mkv')
+    for i in range(video_index):
+        videos.append(VideoFileClip('storage/trim/video'+str(i)+'.mkv'))
     
     final_video = concatenate_videoclips(videos)
-    final_video.write_videofile("storage/tmp/highlights.mkv")
+    final_video.write_videofile("storage/tmp/highlights.mp4")
         
 
 if __name__ =='__main__' :
@@ -54,12 +44,17 @@ if __name__ =='__main__' :
     #plt.plot(fbank_feat)
     #plt.show()
 
-    fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 1000)
+    fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 80)
 
     codebook, _ = kmeans(fbank_feat_av_0, 2)  # number of clusters
     cluster_indices, _ = vq(fbank_feat_av_0, codebook)
+
+    ranges = zero_runs(cluster_indices)
+    print(len(ranges))
     
-    video_index=trim_video('storage/tmp/match.mkv', cluster_indices)
+    video_index=trim_video('storage/tmp/half_2_highlights.mp4', ranges)
+    concat_video(video_index)
+
 
     '''
     plt.plot(fbank_feat_av_0)
