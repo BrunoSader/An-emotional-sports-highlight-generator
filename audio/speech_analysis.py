@@ -4,6 +4,7 @@
 
 import noisereduce as nr
 import librosa
+import soundfile as sf
 
 if __name__ == '__main__' :
 
@@ -14,5 +15,5 @@ if __name__ == '__main__' :
     # select section of data that is noise
     noisy_part, noisy_rate = librosa.load("storage/tmp/crowd_sample.wav")
     # perform noise reduction
-    reduced_noise = nr.reduce_noise(audio_clip=data, noise_clip=noisy_part, verbose=True)
-    librosa.output.write_wav('storage/tmp/reduced_audio.wav', reduced_noise, rate)
+    reduced_noise = nr.reduce_noise(audio_clip=data, noise_clip=noisy_part, verbose=False)
+    sf.write('storage/tmp/reduced_audio.wav', reduced_noise, rate)
