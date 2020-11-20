@@ -49,19 +49,17 @@ def upload_audio_to_bucket(storage_client, blobName, bucketName='football_matche
     blob = bucket.blob(blobName)
     blob.upload_from_filename(uploadPath)
 
-'''def auto_upload_to_bucket(storage_client, blobName, bucketName='football_matches', uploadPath='storage/tmp/audio.mkv'):
+def auto_upload_audio_to_bucket(storage_client, blobName, bucketName='football_matches', uploadPath='storage/tmp/audio.mkv'):
+    for path in tqdm(list_files(storage_client)):
+        print(path)
+        get_video(storage_client, path)
+        video_to_audio(delete_video=True)
+        split_path = path.split('.')
+        path = '{}.wav'.format(split_path[0])
+        upload_audio_to_bucket(storage_client,path)
 
-    return True'''
 
 if __name__=='__main__' :
     client = connect_db()
     
-    for path in tqdm(list_files(client)):
-        print(path)
-        get_video(client, path)
-        video_to_audio(delete_video=True)
-        split_path = path.split('.')
-        path = '{}.wav'.format(split_path[0])
-        upload_audio_to_bucket(client,path)
-
     
