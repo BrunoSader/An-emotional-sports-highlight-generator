@@ -5,6 +5,16 @@ lib/
 
 storage/config/
 
+storage/tmp
+
+storage/.DS_Store
+
+audio/__pycache__
+
 scripts/
 
 *.cfg
+
+.vscode/
+
+lib64
