@@ -1,6 +1,7 @@
 from preprocessing import movingaverage
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 from python_speech_features import mfcc, logfbank, get_filterbanks
 import scipy.io.wavfile as wav
 import matplotlib.pyplot as plt
@@ -8,6 +9,40 @@ from scipy import signal
 import matplotlib.colors as colors
 
 from scipy.cluster.vq import kmeans, vq
+
+
+def trim_video(video, cluster_indices):
+    video_index = 1;
+    
+    for i in range(len(cluster_indices)):
+        while cluster_indices[i]==1:
+            i+=1
+        start_index = i
+        i+=1
+        while cluster_indices[i]==0:
+            i+=1
+        stop_index = i-1
+        
+        start_index=start_index/40
+        stop_index=stop_index/40
+        
+        if(stop_index - start_index > 2):
+            ffmpeg_extract_subclip(video, start_index, stop_index, targetname='storage/trim/video'+str(video_index)+'.mkv')
+            video_index+=1
+    
+        i+=1
+        
+    return video_index
+
+
+def concat_video(video_index):
+    videos=[]
+    for i in video_index:
+        videos[i]= VideoFileClip('video'+str(i)+'.mkv')
+    
+    final_video = concatenate_videoclips(videos)
+    final_video.write_videofile("storage/tmp/highlights.mkv")
+        
 
 if __name__ =='__main__' :
     #ffmpeg_extract_subclip("storage/tmp/audio.wav", 0, 3000, targetname="storage/tmp/res_audio.wav")
@@ -23,11 +58,14 @@ if __name__ =='__main__' :
 
     codebook, _ = kmeans(fbank_feat_av_0, 2)  # number of clusters
     cluster_indices, _ = vq(fbank_feat_av_0, codebook)
+    
+    video_index=trim_video('storage/tmp/match.mkv', cluster_indices)
 
+    '''
     plt.plot(fbank_feat_av_0)
     plt.plot(cluster_indices)
     plt.show()
-    
+    '''
     
     '''fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 100)
     fbank_feat_av_1 = movingaverage(fbank_feat[:, 1], 100)
@@ -44,9 +82,11 @@ if __name__ =='__main__' :
     plt.plot(fbank_feat_av_0)
     plt.show()'''
 
+    '''
     firstChannel = sig[:,0]
     f, t, spectro = signal.spectrogram(firstChannel, rate)
     plt.pcolormesh(t, f, spectro, norm=colors.PowerNorm(gamma=0.2))
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
     plt.show()
+    '''
