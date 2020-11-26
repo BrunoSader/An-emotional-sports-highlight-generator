@@ -44,7 +44,7 @@ def get_video(storage_client, blobName, bucketName='football_matches', savePath=
     blob = bucket.get_blob(blobName)
     blob.download_to_filename(savePath)
 
-def upload_audio_to_bucket(storage_client, blobName, bucketName='football_matches', uploadPath='storage/tmp/audio.wav'):
+def upload_to_bucket(storage_client, blobName, bucketName='football_matches', uploadPath='storage/tmp/audio.wav'):
     bucket = storage_client.get_bucket(bucketName)
     blob = bucket.blob(blobName)
     blob.upload_from_filename(uploadPath)
@@ -56,7 +56,7 @@ def auto_upload_audio_to_bucket(storage_client, blobName, bucketName='football_m
         video_to_audio(delete_video=True)
         split_path = path.split('.')
         path = '{}.wav'.format(split_path[0])
-        upload_audio_to_bucket(storage_client,path)
+        upload_to_bucket(storage_client,path)
 
 
 def upload_folder_content():
@@ -66,10 +66,10 @@ def upload_folder_content():
 
     print("begin")
 
-    for folder in folderList:
+    for folder in tqdm(folderList):
         if(os.path.isdir(os.path.join(pathRoot, folder))):
 
-            for filename in os.listdir(os.path.join(pathRoot, folder)):
+            for filename in tqdm(os.listdir(os.path.join(pathRoot, folder))):
                 filePath = pathRoot + folder + '/' + filename
                 if(filename != '' and os.path.isfile(filePath)):
                     
