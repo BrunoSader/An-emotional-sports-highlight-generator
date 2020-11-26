@@ -34,6 +34,14 @@ def video_to_audio(video_path='storage/tmp/match.mkv', audio_path='storage/tmp/a
         os.remove('storage/tmp/match.mkv')
     return audio
 
+def video_to_audio_final(video_path='storage/tmp/highlights.mp4', audio_path='storage/tmp/audio_highlights.wav', delete_video=False):
+    video = VideoFileClip(video_path)
+    audio = video.audio
+    audio.write_audiofile(audio_path)
+    if delete_video:
+        os.remove('storage/tmp/match.mkv')
+    return audio
+
 def connect_db(file='storage/config/sport-highlight-pk.json') :
     return storage.Client.from_service_account_json('storage/config/sport-highlight-pk.json')
 
@@ -44,6 +52,11 @@ def get_video(storage_client, bucketName='football_matches', blobName='epl/2016-
 
 
 if __name__=='__main__' :
+   
+    '''
     client = connect_db()
     get_video(client, blobName='epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/2.mkv')
     video_to_audio()
+    '''
+    
+    video_to_audio_final()
