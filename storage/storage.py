@@ -59,7 +59,29 @@ def auto_upload_audio_to_bucket(storage_client, blobName, bucketName='football_m
         upload_audio_to_bucket(storage_client,path)
 
 
+def upload_folder_content():
+
+    pathRoot='storage/tmp/AudioClasses/'
+    folderList = ['Crowd', 'ExcitedCommentary', 'UnexcitedCommentary', 'Whistle']
+
+    print("begin")
+
+    for folder in folderList:
+        if(os.path.isdir(os.path.join(pathRoot, folder))):
+
+            for filename in os.listdir(os.path.join(pathRoot, folder)):
+                filePath = pathRoot + folder + '/' + filename
+                if(filename != '' and os.path.isfile(filePath)):
+                    
+
+    print("end")
+                    
+
 if __name__=='__main__' :
     client = connect_db()
+
+    upload_folder_content()
+
+    
     
     
