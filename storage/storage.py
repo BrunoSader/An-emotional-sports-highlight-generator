@@ -7,9 +7,11 @@ import sys
 
 import cv2
 from moviepy.editor import *
+from tqdm import tqdm
 
 
-def list_files(bucket, bucketFolder):
+def list_files(storage_client, bucketName='football_matches', bucketFolder=''):
+    bucket = storage_client.get_bucket(bucketName)
     """List all files in GCP bucket."""
     files = bucket.list_blobs(prefix=bucketFolder)
     fileList = [file.name for file in files if '.' in file.name]
@@ -37,13 +39,49 @@ def video_to_audio(video_path='storage/tmp/match.mkv', audio_path='storage/tmp/a
 def connect_db(file='storage/config/sport-highlight-pk.json') :
     return storage.Client.from_service_account_json('storage/config/sport-highlight-pk.json')
 
-def get_video(storage_client, bucketName='football_matches', blobName='epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/1.mkv', savePath='storage/tmp/match.mkv'):
+def get_video(storage_client, blobName, bucketName='football_matches', savePath='storage/tmp/match.mkv'):
     bucket = storage_client.get_bucket(bucketName)
     blob = bucket.get_blob(blobName)
     blob.download_to_filename(savePath)
 
+def upload_to_bucket(storage_client, blobName, bucketName='football_matches', uploadPath='storage/tmp/audio.wav'):
+    bucket = storage_client.get_bucket(bucketName)
+    blob = bucket.blob(blobName)
+    blob.upload_from_filename(uploadPath)
+
+def auto_upload_audio_to_bucket(storage_client, blobName, bucketName='football_matches', uploadPath='storage/tmp/audio.mkv'):
+    for path in tqdm(list_files(storage_client)):
+        print(path)
+        get_video(storage_client, path)
+        video_to_audio(delete_video=True)
+        split_path = path.split('.')
+        path = '{}.wav'.format(split_path[0])
+        upload_to_bucket(storage_client,path)
+
+
+def upload_folder_content():
+
+    pathRoot='storage/tmp/AudioClasses/'
+    folderList = ['Crowd', 'ExcitedCommentary', 'UnexcitedCommentary', 'Whistle']
+
+    print("begin")
+
+    for folder in tqdm(folderList):
+        if(os.path.isdir(os.path.join(pathRoot, folder))):
+
+            for filename in tqdm(os.listdir(os.path.join(pathRoot, folder))):
+                filePath = pathRoot + folder + '/' + filename
+                if(filename != '' and os.path.isfile(filePath)):
+                    
+
+    print("end")
+                    
 
 if __name__=='__main__' :
     client = connect_db()
-    get_video(client, blobName='epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/2.mkv')
-    video_to_audio()
+
+    upload_folder_content()
+
+    
+    
+    
