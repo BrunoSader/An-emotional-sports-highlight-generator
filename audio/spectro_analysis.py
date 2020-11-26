@@ -18,7 +18,7 @@ def trim_video(video, indices):
         start_index=start_index/40
         stop_index=stop_index/40
         
-        if(stop_index - start_index >= 5):
+        if (stop_index - start_index >= 5) :
             ffmpeg_extract_subclip(video, start_index, stop_index, targetname='storage/trim/video'+str(video_index)+'.mkv')
             video_index+=1
         
@@ -44,15 +44,44 @@ if __name__ =='__main__' :
     #plt.plot(fbank_feat)
     #plt.show()
 
-    fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 80)
+    fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 100)
+    #fbank_feat_av_1 = movingaverage(fbank_feat[:, 1], 100)
+    #fbank_feat_av_2 = movingaverage(fbank_feat[:, 2], 100)
+    #fbank_feat_av_3 = movingaverage(fbank_feat[:, 3], 100)
+    fbank_feat_av_4 = movingaverage(fbank_feat[:, 4], 100)
+    #fbank_feat_av_5 = movingaverage(fbank_feat[:, 5], 100)
 
+    # 1- to invert 0 and 1 (clusters)
+    # Multiplication -> inter join
+    # 1- to invert back 0 and 1 (clusters)
     codebook, _ = kmeans(fbank_feat_av_0, 2)  # number of clusters
-    cluster_indices, _ = vq(fbank_feat_av_0, codebook)
+    cluster_indices_0, _ = vq(fbank_feat_av_0, codebook)
+    cluster_indices_0 = 1-cluster_indices_0
+    #codebook, _ = kmeans(fbank_feat_av_1, 2)
+    #cluster_indices_1, _ = vq(fbank_feat_av_1, codebook)
+    #cluster_indices_1 = 1-cluster_indices_1
+    #codebook, _ = kmeans(fbank_feat_av_2, 2)
+    #cluster_indices_2, _ = vq(fbank_feat_av_2, codebook)
+    #cluster_indices_2 = 1-cluster_indices_2
+    #codebook, _ = kmeans(fbank_feat_av_3, 2)
+    #cluster_indices_3, _ = vq(fbank_feat_av_3, codebook)
+    #cluster_indices_3 = 1-cluster_indices_3
+    codebook, _ = kmeans(fbank_feat_av_4, 2)
+    cluster_indices_4, _ = vq(fbank_feat_av_4, codebook)
+    cluster_indices_4 = 1-cluster_indices_4
+    #codebook, _ = kmeans(fbank_feat_av_5, 2)
+    #cluster_indices_5, _ = vq(fbank_feat_av_5, codebook)
+    #cluster_indices_5 = 1-cluster_indices_5
+
+    cluster_indices = 1 - cluster_indices_0 * cluster_indices_4
+
+    plt.plot(cluster_indices)
+    plt.show()
 
     ranges = zero_runs(cluster_indices)
     print(len(ranges))
     
-    video_index=trim_video('storage/tmp/half_2_highlights.mp4', ranges)
+    video_index=trim_video('storage/tmp/match.mkv', ranges)
     concat_video(video_index)
 
 
