@@ -18,12 +18,24 @@ def trim_video(video, indices):
         start_index=start_index/40
         stop_index=stop_index/40
         
-        if(stop_index - start_index >= 5):
+        if(stop_index - start_index > 5):
             ffmpeg_extract_subclip(video, start_index, stop_index, targetname='storage/trim/video'+str(video_index)+'.mkv')
             video_index+=1
         
     return video_index
 
+def trim_video_final(video, indices):
+    video_index = 0
+    
+    for start_index, stop_index in indices:
+        start_index=start_index/40
+        stop_index=stop_index/40
+        
+        if(stop_index - start_index > 5):
+            ffmpeg_extract_subclip(video, start_index, stop_index, targetname='storage/trim_final/video'+str(video_index)+'.mkv')
+            video_index+=1
+        
+    return video_index
 
 def concat_video(video_index):
     videos=[]
@@ -33,28 +45,46 @@ def concat_video(video_index):
     final_video = concatenate_videoclips(videos)
     final_video.write_videofile("storage/tmp/highlights.mp4")
         
+def concat_video_final(video_index):
+    videos=[]
+    for i in range(video_index):
+        videos.append(VideoFileClip('storage/trim_final/video'+str(i)+'.mkv'))
+    
+    final_video = concatenate_videoclips(videos)
+    final_video.write_videofile("storage/tmp/highlights_final.mp4")
 
 if __name__ =='__main__' :
+    
+    '''
     #ffmpeg_extract_subclip("storage/tmp/audio.wav", 0, 3000, targetname="storage/tmp/res_audio.wav")
     (rate,sig) = wav.read('storage/tmp/audio.wav')
     #mfcc_feat = mfcc(sig,rate, nfft=1103, nfilt=6)
-    fbank_feat = logfbank(sig,rate,nfft=4410,nfilt=6,winlen=0.1,winstep=0.05)
+    fbank_feat = logfbank(sig,rate,nfft=4410,nfilt=6,winlen=0.1,winstep=0.06)
     #plt.plot(mfcc_feat)
     #plt.show()
     #plt.plot(fbank_feat)
     #plt.show()
 
     fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 80)
-
     codebook, _ = kmeans(fbank_feat_av_0, 2)  # number of clusters
     cluster_indices, _ = vq(fbank_feat_av_0, codebook)
-
     ranges = zero_runs(cluster_indices)
     print(len(ranges))
-    
-    video_index=trim_video('storage/tmp/half_2_highlights.mp4', ranges)
+    video_index=trim_video('storage/tmp/match.mkv', ranges)
     concat_video(video_index)
+    
+    '''
 
+    (rate,sig) = wav.read('storage/tmp/audio_highlights.wav')
+    fbank_feat = logfbank(sig,rate,nfft=4410,nfilt=6,winlen=0.1,winstep=0.06)
+    fbank_feat_av_0 = movingaverage(fbank_feat[:, 0], 80)
+    codebook, _ = kmeans(fbank_feat_av_0, 2)  # number of clusters
+    cluster_indices, _ = vq(fbank_feat_av_0, codebook)
+    ranges = zero_runs(cluster_indices)
+    print(len(ranges))
+    video_index=trim_video_final('storage/tmp/highlights.mp4', ranges)
+    concat_video_final(video_index)
+    
 
     '''
     plt.plot(fbank_feat_av_0)
