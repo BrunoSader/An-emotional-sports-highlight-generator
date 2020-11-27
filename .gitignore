@@ -18,3 +18,4 @@ scripts/
 .vscode/
 
 lib64
+.DS_Store
