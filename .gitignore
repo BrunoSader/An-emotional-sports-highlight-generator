@@ -18,3 +18,5 @@ scripts/
 .vscode/
 
 lib64
+*.pyc
+*.png
