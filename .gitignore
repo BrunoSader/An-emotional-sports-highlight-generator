@@ -20,3 +20,4 @@ scripts/
 lib64
 *.pyc
 *.png
+.DS_Store
