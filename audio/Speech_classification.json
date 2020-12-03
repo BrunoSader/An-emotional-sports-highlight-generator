@@ -1,224 +1,222 @@
-{
-    "classification": [
-        {
-            "text": "Pastore avec une petite gêne à la cuisse.",
-            "sentiment": "Negative"
-        },
-        {
-            "text": "David Luiz, en retrait pour Kevin Trapp. Adrien rabiot évidemment qui était à l'organisation du PSG notamment au milieu de terrain avec le positionnement de marco verratti et thiago motta. Il est parti pour jouer milieu droit relayeur comme l'an passé. Quand ils ont le ballon en tout cas.",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "L'équipe de monaco qui ne veut pas reculer visiblement dans ces toutes premières secondes de match. monaco qui on se souvient la la dernière équipe française avoir battu le paris-saint-germain mais c'était au parc des princes au printemps dernier.",
-            "sentiment": "Positive"
-        },
-        {
-            "text": "La montée de l'ancien monégasque layvin kurzawa.",
-            "sentiment": "Positive"
-        },
-        {
-            "text": "Et confirmation de ce que l'on disait concernant monaco ils vont jouer à 4 derrière avec sidibé un peu plus haut ça coulisse quand même raggi qui va rentrer à l'intérieur aussi sûrement mais tu as raison sur le sur l'organisation de la zone.",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "Di maria rabiot adrien rabiot dans la profondeur c'est vers edinson cavani. Un premier appel de l'attaquant uruguayen.",
-            "sentiment": "Positive"
-        },
-        {
-            "text": "On les sent eux-mêmes perturbés les monegasques dans cette entame de match dans leur placement.",
-            "sentiment": "Negative"
-        },
-        {
-            "text": "Le polonais glik qui justement relançait vers sidibé qui semble prendre une position de milieu droit quand même ouais c'est milieu excentré on va dire je pense que c'est avec le ballon et sans le ballon ils doivent avoir une position différente en fait.",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "Le ballon dans la surface de réparation avec Moutinho.",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "Thiago Motta qui fête ses 34 ans aujourd'hui le milieu italo-brésilien",
-            "sentiment": "Positive"
-        },
-        {
-            "text": "Jemerson qui envoie benjamin mendy au feu le centre de mendy capté par david luiz super intervention non seulement il intercepte mais il relance.",
-            "sentiment": "Positive"
-        },
-        {
-            "text": "Thiago motta il a coupé les lignes",
-            "sentiment": "Positive"
-        },
-        {
-            "text": "La passe vers cavani en position de hors-jeu d'habitude il fait de bons appels là il a été impatient par contre. Il se précipite dans son appel et il est en position de hors-jeu.",
-            "sentiment": "Negative"
-        },
-        {
-            "text": "D'habitude il court le long de la défense pour se pour éviter de se retrouver signalé hors-jeu.",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "Javier pastore à côté de maxwell qui est pas sur la feuille de match effectif du paris saint-germain est riche. Et maxwell surtout en tribune blaise matuidi lui est bien sur le banc ce soir côté paris saint-germain.",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "Fabinho qui a récupéré la touche",
-            "sentiment": "Neutral"
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        },
-        {
-            "text": "",
-            "sentiment": ""
-        }
-    ]
-}
+[
+    {
+        "text": "Pastore avec une petite gêne à la cuisse.",
+        "sentiment": "Negative"
+    },
+    {
+        "text": "David Luiz, en retrait pour Kevin Trapp. Adrien rabiot évidemment qui était à l'organisation du PSG notamment au milieu de terrain avec le positionnement de marco verratti et thiago motta. Il est parti pour jouer milieu droit relayeur comme l'an passé. Quand ils ont le ballon en tout cas.",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "L'équipe de monaco qui ne veut pas reculer visiblement dans ces toutes premières secondes de match. monaco qui on se souvient la la dernière équipe française avoir battu le paris-saint-germain mais c'était au parc des princes au printemps dernier.",
+        "sentiment": "Positive"
+    },
+    {
+        "text": "La montée de l'ancien monégasque layvin kurzawa.",
+        "sentiment": "Positive"
+    },
+    {
+        "text": "Et confirmation de ce que l'on disait concernant monaco ils vont jouer à 4 derrière avec sidibé un peu plus haut ça coulisse quand même raggi qui va rentrer à l'intérieur aussi sûrement mais tu as raison sur le sur l'organisation de la zone.",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "Di maria rabiot adrien rabiot dans la profondeur c'est vers edinson cavani. Un premier appel de l'attaquant uruguayen.",
+        "sentiment": "Positive"
+    },
+    {
+        "text": "On les sent eux-mêmes perturbés les monegasques dans cette entame de match dans leur placement.",
+        "sentiment": "Negative"
+    },
+    {
+        "text": "Le polonais glik qui justement relançait vers sidibé qui semble prendre une position de milieu droit quand même ouais c'est milieu excentré on va dire je pense que c'est avec le ballon et sans le ballon ils doivent avoir une position différente en fait.",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "Le ballon dans la surface de réparation avec Moutinho.",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "Thiago Motta qui fête ses 34 ans aujourd'hui le milieu italo-brésilien",
+        "sentiment": "Positive"
+    },
+    {
+        "text": "Jemerson qui envoie benjamin mendy au feu le centre de mendy capté par david luiz super intervention non seulement il intercepte mais il relance.",
+        "sentiment": "Positive"
+    },
+    {
+        "text": "Thiago motta il a coupé les lignes",
+        "sentiment": "Positive"
+    },
+    {
+        "text": "La passe vers cavani en position de hors-jeu d'habitude il fait de bons appels là il a été impatient par contre. Il se précipite dans son appel et il est en position de hors-jeu.",
+        "sentiment": "Negative"
+    },
+    {
+        "text": "D'habitude il court le long de la défense pour se pour éviter de se retrouver signalé hors-jeu.",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "Javier pastore à côté de maxwell qui est pas sur la feuille de match effectif du paris saint-germain est riche. Et maxwell surtout en tribune blaise matuidi lui est bien sur le banc ce soir côté paris saint-germain.",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "Fabinho qui a récupéré la touche",
+        "sentiment": "Neutral"
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    },
+    {
+        "text": "",
+        "sentiment": ""
+    }
+]
