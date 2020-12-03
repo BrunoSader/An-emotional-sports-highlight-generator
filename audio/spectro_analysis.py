@@ -1,12 +1,10 @@
-from preprocessing import transform_to_features, create_feature_average, get_cluster_indices
+from preprocessing import transform_to_features, create_feature_average, get_cluster_indices_via_strategy, get_cluster_indices_via_features, create_spectrogram
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 import matplotlib.pyplot as plt
-from scipy import signal
-import matplotlib.colors as colors
-
 from scipy.cluster.vq import kmeans, vq
+import numpy as np
 
 
 def trim_video(video, indices, min_time):
@@ -52,10 +50,10 @@ def concat_video_final(video_index):
     final_video.write_videofile("storage/tmp/highlights_final.mp4")
 
 if __name__ =='__main__' :
-    
-    mfcc_feat, fbank_feat = transform_to_features('storage/tmp/audio.wav', fbank_bool = False)
-    mfcc_feat_av, fbank_feat_av = create_feature_average(mfcc_feat, length = 80)
-    indices = get_cluster_indices(mfcc_feat_av, strategy='veto')
-    video_index = trim_video('storage/tmp/match.mkv', indices, 1)
+    mfcc_feat, fbank_feat = transform_to_features('storage/tmp/audio.wav', mfcc_bool = False, nfilt=5, nfft=4410, winlen=0.2,winstep=0.05)
+    mfcc_feat_av, fbank_feat_av = create_feature_average(fbank_feat=fbank_feat, length = 50)
+    indices = get_cluster_indices_via_features(fbank_feat_av)
+    video_index = trim_video('storage/tmp/highlights.mp4', indices, 4)
     concat_video(video_index)
+
 
