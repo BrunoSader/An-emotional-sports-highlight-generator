@@ -14,7 +14,7 @@ import progressbar
 import json
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=3)
+#model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=7)
 #model.load_state_dict(torch.load('audio/trained_models/camembert_weights.pth'))
 #model.eval()
 
@@ -60,11 +60,11 @@ def evaluate(model, test_loader, device, flat=True):
         outp1 = model(inp.to(device))
         [acc.append(p1.item()) for p1 in torch.argmax(outp1[0], axis=1).flatten()]
         [lab.append(z1.item()) for z1 in lab1]
-    if flat:
-        print("Total Examples : {} Accuracy {}".format(t, flat_accuracy(acc, lab)))
-    else:
-        acc_neg, acc_neut, acc_pos = sentiment_accuracy(acc, lab)
-        print("Accuracy by sentiment : neg {}, neut {}, pos {}".format(acc_neg, acc_neut, acc_pos))
+    #if flat:
+        #print("Total Examples : {} Accuracy {}".format(t, flat_accuracy(acc, lab)))
+    #else:
+        #cm = confusion_matrix(acc, lab)
+        #print("Confusion matrix : {}".format(cm))
     return flat_accuracy(acc, lab)
 
 
@@ -210,8 +210,8 @@ if __name__ == '__main__':
         test_dataset = TensorDataset(Xtest, Ytest)
         test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
-        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=3)
-        pred = test_file('camembert_weights.pth', test_loader, device, model,
+        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=7)
+        pred = test_file('audio/weights/camembert_weights.pth', test_loader, device, model,
                          flat=False)
         test_data['pred'] = pred
         # data = pd.concat([test_data, test_data], ignore_index=True, axis=1)
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         test_data = TensorDataset(Xtest, Ytest)
         test_loader = DataLoader(test_data, batch_size=batch_size)
 
-        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=3)
+        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=7)
         data['pred'] = analyse(test_loader, device, model)
 
         data.to_json(args.output, orient='index', date_format='iso')
@@ -294,8 +294,8 @@ if __name__ == '__main__':
         loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
         test_loader = DataLoader(test_data, batch_size=batch_size)
 
-        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=3)
-        #model.load_state_dict(torch.load('camembert_weights.pth'))
+        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=7)
+        model.load_state_dict(torch.load('audio/weights/camembert_weights.pth'))
 
         optimizer = AdamW(model.parameters(), lr=4e-5)
 
@@ -330,7 +330,7 @@ if __name__ == '__main__':
                                                                                                   no_train,
                                                                                                   flat_accuracy(
                                                                                                       train_loss, l)))
-            acc_eval = evaluate(model, test_loader, device, True)
+            acc_eval = evaluate(model, test_loader, device, False)
             print("Eval accuracy : {}".format(acc_eval))
             if acc - acc_eval < 0:
                 acc = acc_eval
