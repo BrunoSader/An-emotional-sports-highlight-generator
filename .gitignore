@@ -21,3 +21,4 @@ lib64
 *.pyc
 *.png
 .DS_Store
+ocr/football_short2.mp4

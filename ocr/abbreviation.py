@@ -33,7 +33,7 @@ class AbbreviationResolver(HTMLParser):
         http_req = requests.get("https://www.abbreviations.com/serp.php?st={}&p=99999".format(abbrev))
 
         # Find the appropriate part in the HTML reply
-        html_reply = http_req.content
+        html_reply = http_req.content.decode('utf-8')
         description_reg = re.compile('<p class="desc">.*p>')
         desc_res = description_reg.search(html_reply)
         html_subs = html_reply[desc_res.start():desc_res.end()]
@@ -43,7 +43,7 @@ class AbbreviationResolver(HTMLParser):
         parser.feed(html_subs)
 
         # Load possible teams from file
-        with open('football_teams.txt', 'r') as f:
+        with open('ocr/football_teams.txt', 'r') as f:
             teams_fromfile = np.array(f.read().splitlines())
         f.close()
 

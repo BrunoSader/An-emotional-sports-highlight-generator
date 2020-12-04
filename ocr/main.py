@@ -15,6 +15,7 @@ import time
 import re
 import threading
 
+
 class ImageHandler(object):
 
     def __init__(self):
@@ -24,13 +25,12 @@ class ImageHandler(object):
         self.teams_goals_image = None
         self.teams_goals_text = None
 
-        self.video_source_path = 'storage/tmp/match.mkv'
-        self.export_image_path = 'football.png'
+        self.video_source_path = 'ocr/football_short.mp4'
+        self.export_image_path = 'ocr/img/football.jpg'
 
-        logging.basicConfig(level=logging.WARN)
+        logging.basicConfig(level=logging.WARNING)
 
     def extract_image_from_video(self):
-
         """
         Extracts image from video and saves on disk with specified period.
 
@@ -43,18 +43,19 @@ class ImageHandler(object):
         count = 0
         #success = True
         image_lst = []
-        while True:
+        while(True):
             vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
             success, image = vidcap.read()
             image_lst.append(image)
 
-            ## Stop when last frame is identified
+            # Stop when last frame is identified
             if count > 1:
                 if np.array_equal(image, image_lst[1]):
                     break
                 image_lst.pop(0)  # Clean the list
-            cv2.imwrite(self.export_image_path, image)  # save frame as PNG file
-            logging.info('{}.sec reading a new frame: {} '.format(count, success))
+            # save frame as PNG file
+            cv2.imwrite(self.export_image_path, image)
+            print('{}.sec reading a new frame: {} '.format(count, success))
             count += 1
             eImageExported.set()
             time.sleep(1)
@@ -63,7 +64,7 @@ class ImageHandler(object):
         """
         Finds the scoreboard table in the upper corner
         using Canny edge detection, sets scoreboard_image
-        and exports the picture as 'scoreboard_table.png'
+        and exports the picture as 'scoreboard_table.jpg'
 
         :return: True when scoreboard is found
                  False when scoreboard is not found
@@ -98,7 +99,7 @@ class ImageHandler(object):
 
             # Export the localized scoreboard
             self.scoreboard_image = grayscale_image[upper_row:lower_row, 0:400]
-            cv2.imwrite('scoreboard_table.png', self.scoreboard_image)
+            cv2.imwrite('ocr/img/scoreboard_table.jpg', self.scoreboard_image)
 
             # # DEBUG
             # cv2.imshow('scoreboard_table',self.scoreboard_image)
@@ -109,26 +110,26 @@ class ImageHandler(object):
 
         except Exception as e:
             if len(idx_lst) == 0:
-                logging.info(e)
-                logging.info("No scoreboard found!")
+                logging.warning(e)
+                logging.warning("No scoreboard found!")
                 return False
 
     def split_scoreboard_image(self):
         """
         Splits the scoeboard image into two parts, sets 'time_image' and 'teams_goals_image'
-        and exports as 'time_table.png' and 'teams_goals_table.png'
+        and exports as 'time_table.jpg' and 'teams_goals_table.jpg'
         Left image represents the time.
         Right image represents the teams and goals.
 
         :return: -
         """
         self.time_image = self.scoreboard_image[:, 0:175]
-        cv2.imwrite('time_table.png', self.time_image)
+        cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
 
         self.teams_goals_image = self.scoreboard_image[:, 175:]
-        cv2.imwrite('teams_goals_table.png', self.teams_goals_image)
+        cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
 
-        ## DEBUG
+        # DEBUG
         # cv2.imshow('scoreboard_table_left',self.time_image)
         # cv2.imshow('scoreboard_table_right',self.teams_goals_image)
         # cv2.waitKey(0)
@@ -136,26 +137,27 @@ class ImageHandler(object):
 
     def enlarge_scoreboard_images(self, enlarge_ratio):
         """
-        Enlarges 'time_table.png' and 'teams_goals_table.png'
+        Enlarges 'time_table.jpg' and 'teams_goals_table.jpg'
 
         :param enlarge_ratio: Defines the enlarging size (e.g 2-3x)
         :return: -
         """
-        self.time_image = cv2.resize(self.time_image, (0, 0), fx=enlarge_ratio, fy=enlarge_ratio)
-        self.teams_goals_image = cv2.resize(self.teams_goals_image, (0, 0), fx=enlarge_ratio, fy=enlarge_ratio)
+        self.time_image = cv2.resize(
+            self.time_image, (0, 0), fx=enlarge_ratio, fy=enlarge_ratio)
+        self.teams_goals_image = cv2.resize(
+            self.teams_goals_image, (0, 0), fx=enlarge_ratio, fy=enlarge_ratio)
 
-        ## DEBUG
+        # DEBUG
         # cv2.imshow('time_image_enlarged',self.time_image)
         # cv2.imshow('teams_goals_enlarged',self.teams_goals_image)
         # cv2.waitKey(0)
         ##
 
-
     def _get_time_from_image(self):
         """
         Preprocesses time_image transformations for OCR.
-        Exports 'time_ocr_ready.png' after the manipulations.
-        Reads match time from 'time_ocr_ready.png' using Tesseract.
+        Exports 'time_ocr_ready.jpg' after the manipulations.
+        Reads match time from 'time_ocr_ready.jpg' using Tesseract.
         Applies result to time_text.
 
         :return: True: string is found
@@ -168,26 +170,28 @@ class ImageHandler(object):
         # plt.show()
 
         # Count nonzero to determine contrast type
-        ret, threshed_img = cv2.threshold(self.time_image, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
+        ret, threshed_img = cv2.threshold(
+            self.time_image, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
         nonzero_pxls = np.count_nonzero(threshed_img)
         pxls_limit = np.size(threshed_img)/4
 
         # Applying Special Thresholding and Morphological Transformation for Time OCR preprocess
         if nonzero_pxls < pxls_limit:
-         self.time_image = cv2.GaussianBlur(self.time_image, (3, 3), 0)
+            self.time_image = cv2.GaussianBlur(self.time_image, (3, 3), 0)
 
-        ret, self.time_image = cv2.threshold(self.time_image, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
+        ret, self.time_image = cv2.threshold(
+            self.time_image, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
         kernel = np.ones((3, 3), np.uint8)
 
         if nonzero_pxls < pxls_limit:
-            self.time_image = cv2.erode(self.time_image, kernel,iterations=1)
+            self.time_image = cv2.erode(self.time_image, kernel, iterations=1)
         else:
-            self.time_image = cv2.dilate(self.time_image,kernel,iterations=1)
+            self.time_image = cv2.dilate(self.time_image, kernel, iterations=1)
 
-        cv2.imwrite('time_ocr_ready.png', self.time_image)
-        self.time_text = pytesseract.image_to_string(Image.open('time_ocr_ready.png'),config="-psm 6")
+        cv2.imwrite('ocr/img/time_ocr_ready.jpg', self.time_image)
+        self.time_text = pytesseract.image_to_string(
+            Image.open('ocr/img/time_ocr_ready.jpg'), config="--psm 6")
         logging.info('Time OCR text: {}'.format(self.time_text))
-
 
         # DEBUG
         # cv2.imshow('time_OCR_read',self.time_image)
@@ -200,8 +204,8 @@ class ImageHandler(object):
     def _get_teams_goals_from_image(self):
         """
         Preprocesses teams_goals_image with transformations for OCR.
-        Exports 'teams_goals_ocr_ready.png' after the manipulations.
-        Reads teams and goals information from 'teams_goals_ocr_ready.png' using Tesseract.
+        Exports 'teams_goals_ocr_ready.jpg' after the manipulations.
+        Reads teams and goals information from 'teams_goals_ocr_ready.jpg' using Tesseract.
         Applies result to teams_goals_text.
 
         :return: True: string is found
@@ -214,12 +218,15 @@ class ImageHandler(object):
         # plt.show()
 
         # Applying Thresholding for Teams goals OCR preprocess
-        ret, self.teams_goals_image = cv2.threshold(self.teams_goals_image, 180, 255, cv2.THRESH_BINARY_INV)
-        cv2.imwrite('teams_goals_ocr_ready.png', self.teams_goals_image)
-        self.teams_goals_text = pytesseract.image_to_string(Image.open('teams_goals_ocr_ready.png'))
+        ret, self.teams_goals_image = cv2.threshold(
+            self.teams_goals_image, 180, 255, cv2.THRESH_BINARY_INV)
+        cv2.imwrite('ocr/img/teams_goals_ocr_ready.jpg',
+                    self.teams_goals_image)
+        self.teams_goals_text = pytesseract.image_to_string(
+            Image.open('ocr/img/teams_goals_ocr_ready.jpg'))
         logging.info('Teams and goals OCR text: {}'.format(self.teams_goals_text))
 
-        ## DEBUG
+        # DEBUG
         # cv2.imshow('teams_goals_OCR_read',self.teams_goals_image)
         # cv2.waitKey(0)
         ##
@@ -296,7 +303,6 @@ class Match(object):
         self.match_time_temp = None
         self._match_time_prev = []
 
-
     def analize_scoreboard(self):
         while True:
             try:
@@ -310,9 +316,9 @@ class Match(object):
                 football_match.print_all_match_info()
                 eImageExported.clear()
             except Exception as e:
-                logging.info(e)
+                logging.warning(e)
 
-    def provide_scoreboard_text_values(self,scoreboard_text_values):
+    def provide_scoreboard_text_values(self, scoreboard_text_values):
 
         self.scoreboard_text_values = scoreboard_text_values
 
@@ -370,7 +376,6 @@ class Match(object):
             logging.info("Time text noisy ender removed.")
 
     def update_match_time(self):
-
         """
         Validates cleansed match_time_temp with regular expression and sets match_time if valid value exists
 
@@ -392,13 +397,15 @@ class Match(object):
         if last_valid_timeval < self._match_time_prev[len(self._match_time_prev)-2]:
             # Minute error occured - minute remain unchanged
             if last_valid_timeval[0:2] < self._match_time_prev[len(self._match_time_prev)-2][0:2]:
-                logging.warn("Minute error occured: minute remain unchanged!")
-                fixed_minutes = self._match_time_prev[len(self._match_time_prev)-2][0:2]
+                logging.warning("Minute error occured: minute remain unchanged!")
+                fixed_minutes = self._match_time_prev[len(
+                    self._match_time_prev)-2][0:2]
                 last_valid_timeval = fixed_minutes + last_valid_timeval[2:]
             else:
                 # Second error occured - auto increment second
-                logging.warn("Second error occured: auto incremented second!")
-                seconds = self._match_time_prev[len(self._match_time_prev)-2][-2:]
+                logging.warning("Second error occured: auto incremented second!")
+                seconds = self._match_time_prev[len(
+                    self._match_time_prev)-2][-2:]
                 fixed_seconds = str(int(seconds)+1)
                 last_valid_timeval = last_valid_timeval[:-2] + fixed_seconds
 
@@ -426,8 +433,7 @@ class Match(object):
         self.opponent_score = self.opponent_score_temp
         return True
 
-    def update_match_team(self,selected_team):
-
+    def update_match_team(self, selected_team):
         """
         Sets cleansed home_team or opponent_team values if not set before
 
@@ -458,7 +464,6 @@ class Match(object):
                 self.cleanse_match_score()
                 self.update_match_score()
 
-
                 # Clean OCR read team values and set teams if valid and necessary
                 self.cleanse_match_teams()
 
@@ -483,11 +488,11 @@ class Match(object):
             home_team_name = self.home_team_fullname
             opponent_team_name = self.opponent_team_fullname
 
-        print('{} {} {}-{} {}').format(self.match_time,
-                                      home_team_name,
-                                      self.home_score,
-                                      self.opponent_score,
-                                      opponent_team_name)
+        print('{} {} {}-{} {}'.format(self.match_time,
+                                       home_team_name,
+                                       self.home_score,
+                                       self.opponent_score,
+                                       opponent_team_name))
 
     def resolve_team_abbreviations(self):
         """
@@ -514,19 +519,23 @@ scoreboard = ImageHandler()
 football_match = Match()
 
 eImageExported = threading.Event()
+tImageExtractor = threading.Thread(
+    None, scoreboard.extract_image_from_video, name="ImageExtractor")
+tScoreboardAnalyzer = threading.Thread(
+    None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
+tFullnameQuerier = threading.Thread(
+    None, football_match.resolve_team_abbreviations, name="abbreviationResolver")
+#tMonitor = threading.Thread(None, monitor_create(), name="monitor")
+#tVideoPlayer = threading.Thread(None,scoreboard.play_match_video,name="VideoPlayer")
 
-tImageExtractor = threading.Thread(None, scoreboard.extract_image_from_video, name="ImageExtractor")
-tScoreboardAnalyzer = threading.Thread(None,football_match.analize_scoreboard,name="ScoreboardAnalyzer")
-tFullnameQuerier = threading.Thread(None,football_match.resolve_team_abbreviations, name="abbreviationResolver")
-tVideoPlayer = threading.Thread(None,scoreboard.play_match_video,name="VideoPlayer")
-
-tVideoPlayer.start()
+# tVideoPlayer.start()
 tImageExtractor.start()
 tScoreboardAnalyzer.start()
 tFullnameQuerier.start()
+#scoreboard.play_match_video()
 
 monitor_ui = tk.Tk()
-w,top = football_monitor.create_Football_Monitor(monitor_ui)
+w, top = football_monitor.create_Football_Monitor(monitor_ui)
 
 def user_interface_updater():
 
@@ -536,16 +545,13 @@ def user_interface_updater():
 
     if football_match.home_team_fullname is not None and football_match.opponent_team_fullname is not None:
         top.lblHomeTeam.configure(text=football_match.home_team_fullname)
-        top.lblOpponentTeam.configure(text=football_match.opponent_team_fullname)
+        top.lblOpponentTeam.configure(
+             text=football_match.opponent_team_fullname)
     else:
         top.lblHomeTeam.configure(text=football_match.home_team)
         top.lblOpponentTeam.configure(text=football_match.opponent_team)
 
     monitor_ui.after(1000, user_interface_updater)
 
-
 user_interface_updater()
 monitor_ui.mainloop()
-
-
-
