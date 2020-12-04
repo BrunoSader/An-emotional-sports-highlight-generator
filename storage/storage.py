@@ -113,12 +113,13 @@ def get_folder_content(storage_client, blobName, bucketName, savePath='storage/t
 if __name__=='__main__' :
     client = connect_db()
 
-    # upload_folder_content(client, blobName='classification/v0/AudioClasses/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses/')
+    # upload_folder_content(client, blobName='classification/v4/AudioClasses/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses/')
 
-    # filesList = list_files(client, bucketName='football_matches', bucketFolder='classification')
-    # print(filesList)
+    # get_folder_content(client, blobName='classification/v4/AudioClasses/', bucketName='football_matches', savePath='storage/tmp/AudioClasses/')
 
-    get_folder_content(client, blobName='classification/v0/AudioClasses/', bucketName='football_matches', savePath='storage/tmp/AudioClasses/')
+    # get_video(client, blobName='france_ligue-1/2016-2017/2016-08-28 - 21-45 Monaco 3 - 1 Paris SG/1.mkv', bucketName='football_matches', savePath='storage/tmp/match.mkv')
+
+    # video_to_audio(video_path='storage/tmp/match.mkv', audio_path='storage/tmp/audio.wav', delete_video=False)
 
     
     
