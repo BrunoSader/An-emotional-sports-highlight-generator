@@ -16,6 +16,18 @@ import re
 import threading
 
 
+##Dimensioning values
+##We are defining global variables based on match data in order to isolate the scoreboard
+left_x = 90
+upper_y = 35
+right_x = 400
+lower_y = 70
+
+time_divide = 190
+time_position = 'left'
+##If time-position = right : scoreboard is on the left and time on the right
+##Else if time position = left : scoreboard is on the right and time on the left
+
 class ImageHandler(object):
 
     def __init__(self):
@@ -25,7 +37,7 @@ class ImageHandler(object):
         self.teams_goals_image = None
         self.teams_goals_text = None
 
-        self.video_source_path = 'ocr/football_short.mp4'
+        self.video_source_path = 'ocr/football_short2.mp4'
         self.export_image_path = 'ocr/img/football.jpg'
 
         logging.basicConfig(level=logging.WARNING)
@@ -74,6 +86,11 @@ class ImageHandler(object):
         snapshot_image = cv2.imread(self.export_image_path)
         grayscale_image = cv2.cvtColor(snapshot_image, cv2.COLOR_BGR2GRAY)
 
+        
+        self.scoreboard_image = grayscale_image[upper_y:lower_y, left_x:right_x]
+        cv2.imwrite('ocr/img/scoreboard_table.jpg', self.scoreboard_image)
+
+        '''        
         # Apply Canny edge detection
         canny_points = cv2.Canny(grayscale_image, 200, 200)
 
@@ -96,9 +113,13 @@ class ImageHandler(object):
                         pxl_cnt += 1
             upper_row = min(idx_lst)
             lower_row = max(idx_lst)
-
+            
+            print(upper_row)
+            print(lower_row)
+            
+            
             # Export the localized scoreboard
-            self.scoreboard_image = grayscale_image[upper_row:lower_row, 0:400]
+            self.scoreboard_image = grayscale_image[upper_row:lower_row, 0:500]
             cv2.imwrite('ocr/img/scoreboard_table.jpg', self.scoreboard_image)
 
             # # DEBUG
@@ -107,13 +128,15 @@ class ImageHandler(object):
             # #
 
             return True
+        
 
         except Exception as e:
             if len(idx_lst) == 0:
                 logging.warning(e)
                 logging.warning("No scoreboard found!")
                 return False
-
+        '''
+        
     def split_scoreboard_image(self):
         """
         Splits the scoeboard image into two parts, sets 'time_image' and 'teams_goals_image'
@@ -123,18 +146,37 @@ class ImageHandler(object):
 
         :return: -
         """
+        
+        '''
         self.time_image = self.scoreboard_image[:, 0:175]
         cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
 
         self.teams_goals_image = self.scoreboard_image[:, 175:]
         cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
+        '''
+        
+        relative_time_divide = time_divide-left_x
+         
+        if(time_position=='right'):
+            self.time_image = self.scoreboard_image[:, relative_time_divide:]
+            cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
 
+            self.teams_goals_image = self.scoreboard_image[:, 0:relative_time_divide]
+            cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
+
+        else :
+            self.time_image = self.scoreboard_image[:, 0:relative_time_divide]
+            cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
+
+            self.teams_goals_image = self.scoreboard_image[:, relative_time_divide:]
+            cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
         # DEBUG
         # cv2.imshow('scoreboard_table_left',self.time_image)
         # cv2.imshow('scoreboard_table_right',self.teams_goals_image)
         # cv2.waitKey(0)
         ##
 
+        
     def enlarge_scoreboard_images(self, enlarge_ratio):
         """
         Enlarges 'time_table.jpg' and 'teams_goals_table.jpg'

@@ -22,3 +22,6 @@ lib64
 *.png
 .DS_Store
 ocr/football_short2.mp4
+ocr/football_short3.mp4
+*.jpg
+*.mp4
