@@ -254,7 +254,7 @@ if __name__ == '__main__':
         data_train = pd.read_json(args.file)
         #data_train = data_train[['preproc_text', 'sentiment', 'full_text']]
         data_train = data_train[data_train.sentiment != "N/A"]
-        # data_train = data_train[data_train.sentiment != "neutral"]
+        data_train = data_train[data_train.sentiment != "Mixed"]
         data_train = data_train[data_train.sentiment != ""]
         # print(len(data_train['sentiment']))
 
@@ -294,8 +294,8 @@ if __name__ == '__main__':
         loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
         test_loader = DataLoader(test_data, batch_size=batch_size)
 
-        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=7)
-        model.load_state_dict(torch.load('audio/weights/camembert_weights.pth'))
+        model = CamembertForSequenceClassification.from_pretrained('camembert-base', num_labels=6)
+        #model.load_state_dict(torch.load('audio/weights/camembert_weights.pth'))
 
         optimizer = AdamW(model.parameters(), lr=4e-5)
 
