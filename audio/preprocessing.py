@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from scipy import signal
 import matplotlib.colors as colors
+import librosa
 
 def __movingaverage(interval, window_size):
     window= np.ones(int(window_size))/float(window_size)
@@ -35,6 +36,7 @@ def transform_to_features(audio_file, mfcc_bool=True, fbank_bool=True ,nfft=4410
 def create_feature_average(mfcc_feat=None, fbank_feat=None, length=100):
     mfcc_feat_av = []
     fbank_feat_av = []
+    raw_feat_av = None
     if mfcc_feat is not None :
         mfcc_feat_av.append(__movingaverage(mfcc_feat[:, 0], length))
         mfcc_feat_av.append(__movingaverage(mfcc_feat[:, 1], length))
@@ -49,7 +51,6 @@ def create_feature_average(mfcc_feat=None, fbank_feat=None, length=100):
         fbank_feat_av.append(__movingaverage(fbank_feat[:, 3], length))
         fbank_feat_av.append(__movingaverage(fbank_feat[:, 4], length))
         #fbank_feat_av.append(__movingaverage(fbank_feat[:, 5], length))
-
     return np.transpose(np.array(mfcc_feat_av)), np.transpose(np.array(fbank_feat_av))
 
 ### Strategies are "veto", "one-for-all", "democratic"
@@ -107,10 +108,12 @@ def get_cluster_indices_via_strategy(feat_arr, strategy='veto'):
 
     return(__zero_runs(cluster_indices))
 
-def get_cluster_indices_via_features(feat_arr):
+def get_cluster_indices_via_features(feat_arr, plot_bool=False):
+    print("Getting clusters")
     kmeans = KMeans(n_clusters=2, random_state=69).fit(feat_arr)
-    plt.plot(kmeans.labels_)
-    plt.show()
+    if plot_bool :
+        plt.plot(kmeans.labels_)
+        plt.show()
     return(__zero_runs(kmeans.labels_))
 
 def create_spectrogram(audio_file, plot_bool=False):
@@ -123,3 +126,11 @@ def create_spectrogram(audio_file, plot_bool=False):
         plt.xlabel('Time [sec]')
         plt.show()
     return f, t, spectro
+
+def raw_spectro(audio_file, sr=1600, plot_bool=False) :
+    print("Raw spectro")
+    sig, rate = librosa.load(audio_file, sr=sr)
+    if plot_bool :
+        plt.plot(np.linspace(0, len(sig)/rate, len(sig)), sig)
+        plt.show()
+    return (rate,sig)
