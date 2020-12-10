@@ -65,6 +65,7 @@ ptyprocess==0.6.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.20
+pydub==0.24.1
 Pygments==2.7.2
 pyparsing==2.4.7
 python-dateutil==2.8.1
@@ -84,6 +85,7 @@ scipy==1.5.4
 sentencepiece==0.1.94
 six==1.15.0
 SoundFile==0.10.3.post1
+SpeechRecognition==3.8.1
 tensorboard==2.4.0
 tensorboard-plugin-wit==1.7.0
 tensorflow==2.3.1
