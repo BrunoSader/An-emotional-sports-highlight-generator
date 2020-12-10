@@ -119,9 +119,10 @@ def get_folder_content(storage_client, blobName, bucketName, savePath='storage/t
 
 
 if __name__=='__main__' :
-   
-    '''
+
     client = connect_db()
+    get_video(client,'epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/1.mkv')
+    video_to_audio()
 
     # upload_folder_content(client, blobName='classification/v4/AudioClasses/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses/')
 
