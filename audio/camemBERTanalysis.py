@@ -57,6 +57,7 @@ def evaluate(model, test_loader, device, flat=True):
         inp.to(device)
         lab1.to(device)
         t += lab1.size(0)
+        inp = inp.long()
         outp1 = model(inp.to(device))
         [acc.append(p1.item()) for p1 in torch.argmax(outp1[0], axis=1).flatten()]
         [lab.append(z1.item()) for z1 in lab1]
@@ -315,6 +316,7 @@ if __name__ == '__main__':
                 labels1 = labels1.long()
                 labels1.to(device)
                 optimizer.zero_grad()
+                inputs = inputs.long()
                 outputs = model(inputs.to(device))
                 loss = criterion(outputs[0], labels1.to(device)).to(device)
                 logits = outputs[0]
