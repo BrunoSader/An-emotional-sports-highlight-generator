@@ -27,7 +27,7 @@ time_width = 65
 time_position = 'left'
 
 time_list = []
-video_length = 130
+video_length = 1079
 ##If time-position = right : scoreboard is on the left and time on the right
 ##Else if time position = left : scoreboard is on the right and time on the left
 
@@ -41,7 +41,7 @@ class ImageHandler(object):
         self.teams_goals_image = None
         self.teams_goals_text = None
 
-        self.video_source_path = 'ocr/matchcut.mkv'
+        self.video_source_path = 'ocr/secondmatch.mkv'
         self.export_image_path = 'ocr/img/football.jpg'
 
         logging.basicConfig(level=logging.WARNING)
@@ -59,26 +59,27 @@ class ImageHandler(object):
         count = 0
         #success = True
         image_lst = []
-        while(True):
-            vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
-            success, image = vidcap.read()
-            image_lst.append(image)
+        for i in range(video_length-1):
+            while(True):
+                vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+                success, image = vidcap.read()
+                image_lst.append(image)
 
-            # Stop when last frame is identified
-            if count > 1:
-                if np.array_equal(image, image_lst[1]):
-                    break
-                image_lst.pop(0)  # Clean the list
-            # save frame as PNG file
-            
-            try :
-                cv2.imwrite(self.export_image_path, image)
-                print('{}.sec reading a new frame: {} '.format(count, success))
-                count += 1
-                eImageExported.set()
-                time.sleep(1)
-            except Exception as e:
-                pass
+                # Stop when last frame is identified
+                if count > 1:
+                    if np.array_equal(image, image_lst[1]):
+                        break
+                    image_lst.pop(0)  # Clean the list
+                # save frame as PNG file
+                
+                try :
+                    cv2.imwrite(self.export_image_path, image)
+                    print('{}.sec reading a new frame: {} '.format(count, success))
+                    count += 1
+                    eImageExported.set()
+                    time.sleep(1)
+                except Exception as e:
+                    pass
 
     def localize_scoreboard_image(self):
         """
@@ -478,21 +479,21 @@ class Match(object):
 
     
 def getImportantHighlights(scoreboard, football_match):
-    print(time_list)
-    highlights = [];
+    
+    highlights = []
     
     for i in range(len(time_list)-1):
-        value = int(time_list[i][0:2])*60 + int(time_list[i][4:5])*10
-        value_next = int(time_list[i+1][0:2])*60 + int(time_list[i+1][4:5])*10
-        if(value_next-value > 10):
+        value = int(time_list[i][0:2])*60 + int(time_list[i][3:5])
+        value_next = int(time_list[i+1][0:2])*60 + int(time_list[i+1][3:5])
+        if((value_next-value > 10) and (time_list[i+1][3]!= '6')):
             highlights.append(time_list[i])
-            print(value, value_next)
     
     with open('your_file.txt', 'w') as f:
-        for item in time_list:
+        for item in highlights:
             f.write("%s\n" % item)
-    print(highlights)       
-            
+    print(highlights)      
+
+    
 scoreboard = ImageHandler()
 football_match = Match()
 
@@ -505,26 +506,7 @@ tScoreboardAnalyzer = threading.Thread(
 tImageExtractor.start()
 tScoreboardAnalyzer.start()
 
-'''
-tImageExtractor.join(video_length-1)
-tScoreboardAnalyzer.join(video_length-1)
-tImageExtractor.join(video_length-2)
-tScoreboardAnalyzer.join(video_length-2)
+tImageExtractor.join()
+tScoreboardAnalyzer.join()
 
-'''
-tImageExtractor.join(video_length-1)
-tScoreboardAnalyzer.join(video_length-1)
 getImportantHighlights(scoreboard, football_match)
-
-'''
-eImageExported = threading.Event()
-tImageExtractor = threading.Thread(
-    None, scoreboard.extract_image_from_video, name="ImageExtractor")
-tScoreboardAnalyzer = threading.Thread(
-    None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
-
-
-tImageExtractor.start()
-tScoreboardAnalyzer.start()
-
-'''
