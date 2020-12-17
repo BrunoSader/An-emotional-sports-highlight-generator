@@ -397,6 +397,8 @@ class Match(object):
 
         self.match_time = last_valid_timeval
         time_list.append(self.match_time)
+        with open('times.txt', 'a') as f:
+            f.write("%s\n" % self.match_time)
         return True
 
     def update_match_score(self):
@@ -479,7 +481,7 @@ class Match(object):
 
     
 def getImportantHighlights(scoreboard, football_match):
-    
+    '''
     highlights = []
     
     for i in range(len(time_list)-1):
@@ -488,10 +490,13 @@ def getImportantHighlights(scoreboard, football_match):
         if((value_next-value > 10) and (time_list[i+1][3]!= '6')):
             highlights.append(time_list[i])
     
-    with open('your_file.txt', 'w') as f:
-        for item in highlights:
+      
+    with open('times.txt', 'w') as f:
+        for item in time_list:
             f.write("%s\n" % item)
-    print(highlights)      
+            
+    '''
+    #print(time_list)      
 
     
 scoreboard = ImageHandler()
