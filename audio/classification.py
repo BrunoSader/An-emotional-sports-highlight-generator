@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 from hmmlearn import hmm
 from sklearn.metrics import confusion_matrix
 import itertools
-import os
+import os, shutil
 import math
+from moviepy.editor import VideoFileClip, concatenate_videoclips
+from moviepy.editor import AudioFileClip
 
 
 class HMMTrainer(object):
@@ -31,11 +33,10 @@ class HMMTrainer(object):
         return self.model.score(input_data)
 
 
+# Parse the input folder, create HMM model and return it
+def getHmmModel(input_folder):
 
-if __name__ =='__main__' :
-    
     hmm_models = []
-    input_folder = 'storage/tmp/AudioClasses/'
 
     # Parse the input directory
     for dirname in os.listdir(input_folder):
@@ -53,7 +54,7 @@ if __name__ =='__main__' :
         y_words = []
         
         # Iterate through the audio files (leaving 1 file for testing in each class)
-        # for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')][:-1]:
+        # for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')][:1]:
         for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')]:
 
                 # Read the input file
@@ -80,24 +81,89 @@ if __name__ =='__main__' :
         hmm_models.append((hmm_trainer, label))
         hmm_trainer = None
     
-    
-
-    # Testing on audio from video
-    startEndSegments = []
-    pred_labels = []
-    input_folder = "storage/tmp/segments/"
-    testingResults = []
-    
+    return hmm_models
 
 
-    # Segments audio into clips
-    start = 0
-    for index in range(565):
-        ffmpeg_extract_subclip("storage/tmp/audio.wav", start+index*5, start+(index+1)*5, targetname="storage/tmp/segments/segment" + str(start+index*5) + ".wav")
+def splitAudio(start, indexRange, segmLength, audioSegmPath):
+
+    # indexRange = 565
+    for index in range(indexRange):
+        ffmpeg_extract_subclip("storage/tmp/audio.wav", start+index*segmLength, start+(index+1)*segmLength, targetname= audioSegmPath + str(start+index*segmLength) + ".wav")
+
+
+def splitAudioNew(start, indexRange, audioSegmPath):
     
+    audio = AudioFileClip(audioSegmPath)
+    audioClips = []
+    for index in range(indexRange):
+        audioClips.append(audio.subclip(start+index*5, start+(index+1)*5))
+
+    return audioClips
+
+# Get video segments + lists of segments of all classes
+def splitVideoNew(segmLength, audioResults, videoPath):
+    
+    video = VideoFileClip(videoPath)
+    videoClips = []
+    crowdSegm = []
+    excitedCom = []
+    unexcitedCom = []
+    whistle = []
+
+    for results in audioResults:
+
+        if(results[1] == 'Crowd'):
+            crowdSegm.append(results[0])
+        
+        if(results[1] == 'ExcitedCommentary'):
+            excitedCom.append(results[0])
+        
+        if(results[1] == 'UnexcitedCommentary'):
+            unexcitedCom.append(results[0])
+        
+        if(results[1] == 'Whistle'):
+            whistle.append(results[0])
+
+        if(results[1] == 'Crowd' or results[1] == 'ExcitedCommentary' or results[1] == 'Whistle'):
+            videoClips.append(video.subclip(int(results[0]), int(results[0])+segmLength))
+
+    print("crowdSegm="+str(len(crowdSegm)))
+    print("ExcitedCom="+str(len(excitedCom)))
+    print("unexcitedCom="+str(len(unexcitedCom)))
+    print("lenInsideFct="+str(len(videoClips)))
+
+    return videoClips, crowdSegm, excitedCom, unexcitedCom, whistle
+
+
+# Create folder if it doesn't exist
+# Delete content of existing folder 
+def prepareFolder(folderPath):
+
+    if(os.path.isdir(folderPath)):
+
+        # Deleting files inside the folder
+        for filename in os.listdir(folderPath):
+            filePath = os.path.join(folderPath, filename)
+            try:
+                if os.path.isfile(filePath) or os.path.islink(filePath):
+                    os.unlink(filePath)
+                elif os.path.isdir(filePath):
+                    shutil.rmtree(filePath)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (filePath, e))
+    
+    else :
+        os.mkdir(folderPath)
+
+
+# Get class labels
+def computeClassLabel(segments_folder, hmm_models):
+
+    results = []
+
     # Read each clip & compute class label
-    for fileName in os.listdir(input_folder):
-        sampling_freq, audio = wavfile.read(input_folder+fileName)
+    for fileName in os.listdir(segments_folder):
+        sampling_freq, audio = wavfile.read(segments_folder+fileName)
         mfcc_features = mfcc(audio, sampling_freq)
         max_score = -9999999999999999999
         output_label = None
@@ -114,7 +180,73 @@ if __name__ =='__main__' :
 
             # scoresList.append(math.trunc(score))
 
-        testingResults.append([fileName, output_label])
-        # testingResults.append([fileName, scoresList])
+        segmIndex = fileName[0:-4]
+        results.append([int(segmIndex), output_label])
+        # results.append([fileName, scoresList])
+    
+    # Sort results by segment index
+    sortedResults = sorted(results, key=lambda result: result[0])
 
-    print(testingResults)
+    return sortedResults
+
+
+# Write class info to specified txt file
+def writeToFile(file, className, segmList):
+
+    file.write(className)
+    for segment in segmList:
+        file.write(str(segment) + " ")
+    
+    file.write("\n")
+
+if __name__ =='__main__' :
+    
+    input_folder = 'storage/tmp/AudioClasses/'
+    
+    # Create hmm model
+    hmm_models = getHmmModel(input_folder)
+    
+    # Preparing the folder
+    audioSegmPath = "storage/tmp/audioSegments/"
+    # videoSegmPath = "storage/tmp/videoSegments/"
+    videoPath = 'storage/tmp/match.mkv'
+    prepareFolder(audioSegmPath)
+    # prepareFolder(videoSegmPath)
+    segmLength = 5
+
+    # Split audio into segments
+    splitAudio(start=0, indexRange=565, segmLength=segmLength, audioSegmPath=audioSegmPath)
+    
+
+    # Split video into segments
+    # splitVideo(start=0, indexRange=10, videoSegmPath=videoSegmPath)
+
+
+    # Get class labels on audio segments
+    audioResults = computeClassLabel(audioSegmPath, hmm_models)
+
+
+    # clip = VideoFileClip("storage/tmp/match.mkv")
+    videoClips, crowd, excitedCom, unexcitedCom, whistle = splitVideoNew(segmLength=segmLength, audioResults=audioResults, videoPath=videoPath)
+
+    # Delete previous classes segments distribution
+    if(os.path.isfile("storage/tmp/classesSegments.txt")):
+        os.remove("storage/tmp/classesSegments.txt")
+    
+    f= open("storage/tmp/classesSegments.txt","w+")
+    writeToFile(f, "Crowd:", crowd)
+    writeToFile(f, "ExcitedCommentary:", excitedCom)
+    writeToFile(f, "UnexcitedCommentary:", unexcitedCom)
+    writeToFile(f, "Whistle:", whistle)
+    f.close()
+
+    finalVideo = concatenate_videoclips(videoClips)
+
+    # Delete previous highlight
+    if(os.path.isfile("storage/tmp/highlights.mp4")):
+        os.remove("storage/tmp/highlights.mp4")
+
+    finalVideo.write_videofile("storage/tmp/highlights.mp4")
+
+
+    print(audioResults)
