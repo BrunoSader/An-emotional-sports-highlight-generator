@@ -9,7 +9,6 @@ filename='times.txt'
 highlight_length = 10
 video_path = 'ocr/highlights_videos'
 video_name = 'but.mkv'
-video_length = 300
 
 def readFile(filename):
     with open(filename) as f:
@@ -57,10 +56,7 @@ def trim_video(video, indices):
     for item in indices:
         start_index = int(item)-2
         stop_index = int(item)+30
-        if(stop_index<video_length):
-            ffmpeg_extract_subclip(video_path +'/'+ video, start_index , stop_index, targetname=video_path+str(video_index)+'.mkv')
-        else :
-            ffmpeg_extract_subclip(video_path +'/'+ video, video_length , stop_index, targetname=video_path+str(video_index)+'.mkv')
+        ffmpeg_extract_subclip(video_path +'/'+ video, start_index , stop_index, targetname=video_path+'/' +str(video_index)+'.mkv')
         video_index+=1
 
     return video_index
@@ -68,7 +64,7 @@ def trim_video(video, indices):
 
 def concat_video(video_index):
     videos=[]
-    for i in range(video_index-1):
+    for i in range(video_index):
         videos.append(VideoFileClip(video_path+ '/' + str(i)+'.mkv'))
     
     final_video = concatenate_videoclips(videos)

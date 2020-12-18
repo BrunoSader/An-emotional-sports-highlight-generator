@@ -27,7 +27,7 @@ time_width = 65
 time_position = 'left'
 
 time_list = []
-video_length = 300
+video_length = 360
 ##If time-position = right : scoreboard is on the left and time on the right
 ##Else if time position = left : scoreboard is on the right and time on the left
 
@@ -41,7 +41,7 @@ class ImageHandler(object):
         self.teams_goals_image = None
         self.teams_goals_text = None
 
-        self.video_source_path = 'ocr/tmp/but.mkv'
+        self.video_source_path = 'ocr/tmp/test.mkv'
         self.export_image_path = 'ocr/img/football.jpg'
 
         logging.basicConfig(level=logging.WARNING)

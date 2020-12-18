@@ -35,3 +35,5 @@ ocr/tmp/fullmatchhd.mkv
 ocr/tmp/matchcut.mkv
 ocr/tmp/secondmatch.mkv
 ocr/tmp/test.mkv
+*.mkv
+times.txt
