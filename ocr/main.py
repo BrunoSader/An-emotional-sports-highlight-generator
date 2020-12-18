@@ -27,7 +27,7 @@ time_width = 65
 time_position = 'left'
 
 time_list = []
-video_length = 1079
+video_length = 300
 ##If time-position = right : scoreboard is on the left and time on the right
 ##Else if time position = left : scoreboard is on the right and time on the left
 
@@ -41,7 +41,7 @@ class ImageHandler(object):
         self.teams_goals_image = None
         self.teams_goals_text = None
 
-        self.video_source_path = 'ocr/secondmatch.mkv'
+        self.video_source_path = 'ocr/tmp/but.mkv'
         self.export_image_path = 'ocr/img/football.jpg'
 
         logging.basicConfig(level=logging.WARNING)
@@ -282,10 +282,11 @@ class Match(object):
         self.match_time = None
         self.match_time_temp = None
         self._match_time_prev = []
+        
+        self.index = 0
 
     def analize_scoreboard(self):
-        index = 0
-        while index < video_length:
+        while self.index < video_length:
             try:
                 eImageExported.wait()
                 scoreboard.localize_scoreboard_image()
@@ -296,7 +297,7 @@ class Match(object):
                 football_match.update_all_match_info()
                 football_match.print_all_match_info()
                 eImageExported.clear()
-                index += 1
+                self.index += 1
             except Exception as e:
                 logging.warning(e)
 
@@ -398,7 +399,7 @@ class Match(object):
         self.match_time = last_valid_timeval
         time_list.append(self.match_time)
         with open('times.txt', 'a') as f:
-            f.write("%s\n" % self.match_time)
+            f.write("%s,%s\n" % (self.match_time, self.index))
         return True
 
     def update_match_score(self):
@@ -496,9 +497,8 @@ def getImportantHighlights(scoreboard, football_match):
             f.write("%s\n" % item)
             
     '''
-    #print(time_list)      
 
-    
+open('times.txt', 'w').close()
 scoreboard = ImageHandler()
 football_match = Match()
 
@@ -511,7 +511,7 @@ tScoreboardAnalyzer = threading.Thread(
 tImageExtractor.start()
 tScoreboardAnalyzer.start()
 
-tImageExtractor.join()
-tScoreboardAnalyzer.join()
+tImageExtractor.join(video_length)
+tScoreboardAnalyzer.join(video_length)
 
-getImportantHighlights(scoreboard, football_match)
+#getImportantHighlights(scoreboard, football_match)
