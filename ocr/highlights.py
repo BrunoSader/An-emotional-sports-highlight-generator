@@ -9,27 +9,27 @@ filename='times.txt'
 highlight_length = 10
 video_path = 'ocr/highlights_videos'
 video_name = 'but.mkv'
-video_length = 360
+video_length = 300
 
 def readFile(filename):
     with open(filename) as f:
         list = f.read().splitlines() 
-    
-    
     return list
     
-'''    
-def highlights(df):
+    
+def highlights(list):
     highlights = []
     
-    for item in df['list']:
-        value = int(item[0:2])*60 + int(item[3:5])
-        value_next = int(item[0:2])*60 + int(item[3:5])
-        if((value_next-value > highlight_length) and (item[3]!= '6')):
-            highlights.append(df['Second'][item])
+    for i in range(len(list)-1):
+        if((list[i][4] != ',') and (list[i+1][4] != ',')):
+            values_i = list[i].split(',')
+            values_next = list[i+1].split(',')
+        
+        if((int(values_next[1])-int(values_i[1]) > highlight_length) and (values_i[0][3]!= '6')):
+            highlights.append(values_i[1])
     
     return highlights
-'''
+
 
 
 def getImportantHighlights(time_list):
@@ -78,7 +78,7 @@ def concat_video(video_index):
     
 if __name__ =='__main__' :
     
-    #print(getImportantHighlights(readFile(filename)))
-    trim_video(video_name, getImportantHighlights(readFile(filename)))
+    #print(highlights(readFile(filename)))
+    trim_video(video_name, highlights(readFile(filename)))
     #print(video_index)
     #concat_video(2)
