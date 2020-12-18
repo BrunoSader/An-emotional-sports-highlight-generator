@@ -208,18 +208,12 @@ if __name__ =='__main__' :
     
     # Preparing the folder
     audioSegmPath = "storage/tmp/audioSegments/"
-    # videoSegmPath = "storage/tmp/videoSegments/"
     videoPath = 'storage/tmp/match.mkv'
     prepareFolder(audioSegmPath)
-    # prepareFolder(videoSegmPath)
     segmLength = 5
 
     # Split audio into segments
     splitAudio(start=0, indexRange=565, segmLength=segmLength, audioSegmPath=audioSegmPath)
-    
-
-    # Split video into segments
-    # splitVideo(start=0, indexRange=10, videoSegmPath=videoSegmPath)
 
 
     # Get class labels on audio segments
@@ -228,6 +222,34 @@ if __name__ =='__main__' :
 
     # clip = VideoFileClip("storage/tmp/match.mkv")
     videoClips, crowd, excitedCom, unexcitedCom, whistle = splitVideoNew(segmLength=segmLength, audioResults=audioResults, videoPath=videoPath)
+
+
+    # Get useful classes matrix : list of segment index and class
+    useClasses = []
+    for segment in excitedCom:
+        useClasses.append([segment, 'excitedCom'])
+    
+    for segment in crowd:
+        useClasses.append([segment, 'crowd'])
+    
+    useClassesSort = sorted(useClasses, key=lambda result: result[0])
+
+
+    # Add segment in between 2 large useful segments
+    for index in range(len(useClassesSort)):
+        if( index < (len(useClassesSort)-1) and useClassesSort[index][0] + 2*segmLength == useClassesSort[index+1][0] and
+        useClassesSort[index][1] == 'crowd' or useClassesSort[index][1] == 'excitedCom' and
+        useClassesSort[index+1][1] == 'crowd' or useClassesSort[index+1][1] == 'excitedCom'):
+            useClassesSort.append([ useClassesSort[index] + segmLength, 'Added'])
+    
+    useClassesInsertSort = sorted(useClassesSort, key=lambda result: result[0])
+
+
+    # Action on excited commenteary segment alone
+
+
+    # Action on crowd cheering segment alone
+
 
     # Delete previous classes segments distribution
     if(os.path.isfile("storage/tmp/classesSegments.txt")):
@@ -241,6 +263,7 @@ if __name__ =='__main__' :
     f.close()
 
     finalVideo = concatenate_videoclips(videoClips)
+
 
     # Delete previous highlight
     if(os.path.isfile("storage/tmp/highlights.mp4")):
