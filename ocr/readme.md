@@ -16,7 +16,7 @@ Qui sont les positions de la scoreboard dans la video, en pixels.
 
 **time_divide** 
 
-Correspond à la position de séparation entre la partie "temps" de la scoreboard et la partie "score",  <u>par rapport à left_x</u>
+Correspond à la position de séparation entre la partie "temps" de la scoreboard et la partie "score"
 
 **time_width**
 
