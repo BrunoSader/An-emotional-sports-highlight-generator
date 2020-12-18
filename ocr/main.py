@@ -26,7 +26,6 @@ time_divide = 240
 time_width = 65
 time_position = 'left'
 
-time_list = []
 video_length = 360
 ##If time-position = right : scoreboard is on the left and time on the right
 ##Else if time position = left : scoreboard is on the right and time on the left
@@ -397,7 +396,6 @@ class Match(object):
             self._match_time_prev.pop(0)
 
         self.match_time = last_valid_timeval
-        time_list.append(self.match_time)
         with open('times.txt', 'a') as f:
             f.write("%s,%s\n" % (self.match_time, self.index))
         return True
@@ -465,6 +463,7 @@ class Match(object):
         else:
             logging.info("Unable to update match info: no text received!")
 
+
     def print_all_match_info(self):
 
         home_team_name = self.home_team
@@ -481,23 +480,6 @@ class Match(object):
                                        opponent_team_name))
 
     
-def getImportantHighlights(scoreboard, football_match):
-    '''
-    highlights = []
-    
-    for i in range(len(time_list)-1):
-        value = int(time_list[i][0:2])*60 + int(time_list[i][3:5])
-        value_next = int(time_list[i+1][0:2])*60 + int(time_list[i+1][3:5])
-        if((value_next-value > 10) and (time_list[i+1][3]!= '6')):
-            highlights.append(time_list[i])
-    
-      
-    with open('times.txt', 'w') as f:
-        for item in time_list:
-            f.write("%s\n" % item)
-            
-    '''
-
 open('times.txt', 'w').close()
 scoreboard = ImageHandler()
 football_match = Match()
