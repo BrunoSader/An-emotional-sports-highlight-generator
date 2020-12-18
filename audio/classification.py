@@ -100,20 +100,19 @@ def splitAudioNew(start, indexRange, audioSegmPath):
 
     return audioClips
 
+
 # Get video segments + lists of segments of all classes
-def splitVideoNew(segmLength, audioResults, videoPath):
+def getInitialClasses(segmLength, classifResults):
     
-    video = VideoFileClip(videoPath)
-    videoClips = []
-    crowdSegm = []
+    crowd = []
     excitedCom = []
     unexcitedCom = []
     whistle = []
 
-    for results in audioResults:
+    for results in classifResults:
 
         if(results[1] == 'Crowd'):
-            crowdSegm.append(results[0])
+            crowd.append(results[0])
         
         if(results[1] == 'ExcitedCommentary'):
             excitedCom.append(results[0])
@@ -124,15 +123,64 @@ def splitVideoNew(segmLength, audioResults, videoPath):
         if(results[1] == 'Whistle'):
             whistle.append(results[0])
 
-        if(results[1] == 'Crowd' or results[1] == 'ExcitedCommentary' or results[1] == 'Whistle'):
-            videoClips.append(video.subclip(int(results[0]), int(results[0])+segmLength))
+    return crowd, excitedCom, unexcitedCom, whistle
 
-    print("crowdSegm="+str(len(crowdSegm)))
-    print("ExcitedCom="+str(len(excitedCom)))
-    print("unexcitedCom="+str(len(unexcitedCom)))
-    print("lenInsideFct="+str(len(videoClips)))
 
-    return videoClips, crowdSegm, excitedCom, unexcitedCom, whistle
+# Adds extra segments between important moments; treats isolated crowd and excited commentary
+def fineTuneSelection(crowd, excitedCom):
+
+    # Concatenate lists of usefull classes : list of [segment index,  class]
+    useClasses = []
+    for segment in excitedCom:
+        useClasses.append([segment, 'excitedCom'])
+    
+    for segment in crowd:
+        useClasses.append([segment, 'crowd'])
+    
+    useClassesSort = sorted(useClasses, key=lambda result: result[0])
+
+
+    # Add segment in between 2 large useful segments
+    for index in range(len(useClassesSort)):
+        if( index < (len(useClassesSort)-1) and useClassesSort[index][0] + 2*segmLength == useClassesSort[index+1][0] and
+        useClassesSort[index][1] == 'crowd' or useClassesSort[index][1] == 'excitedCom' and
+        useClassesSort[index+1][1] == 'crowd' or useClassesSort[index+1][1] == 'excitedCom'):
+            useClassesSort.append([ useClassesSort[index] + segmLength, 'Extra'])
+    
+    
+    # Isolated short (1 window) excited commentary -> take previous segment
+    for index in range(len(useClassesSort)):
+        if(index > 1 and index < (len(useClassesSort)-1) and useClassesSort[index][1] == 'excitedCom' and 
+        useClassesSort[index-1][0] < useClassesSort[index][0] - 2*segmLength and useClassesSort[index][0] + 2*segmLength < useClassesSort[index+1][0]):
+            useClassesSort.append([ useClassesSort[index] - segmLength, 'Extra'])
+
+
+    # Isolated short (1 window) crowd cheering -> delete segment
+    finalList = []
+    for index in range(len(useClassesSort)):
+        if(index > 1 and index < (len(useClassesSort)-1) and useClassesSort[index][1] == 'crowd' and 
+        useClassesSort[index-1][0] < useClassesSort[index][0] - 2*segmLength and useClassesSort[index][0] + 2*segmLength < useClassesSort[index+1][0]):
+            continue
+        else:
+            finalList.append([useClassesSort[index][0], useClassesSort[index][1]])
+
+    # Sort final list
+    finalListSort = sorted(finalList, key=lambda result: result[0])
+
+    return finalListSort
+
+
+# Get video segments + lists of segments of all classes
+def splitVideo(segmLength, finalList, videoPath):
+    
+    video = VideoFileClip(videoPath)
+    videoClips = []
+
+    for result in finalList:
+        if(result[1] == 'Crowd' or result[1] == 'ExcitedCommentary' or result[1] == 'Whistle'):
+            videoClips.append(video.subclip(int(result[0]), int(result[0])+segmLength))
+
+    return videoClips
 
 
 # Create folder if it doesn't exist
@@ -199,6 +247,13 @@ def writeToFile(file, className, segmList):
     
     file.write("\n")
 
+# Write final results in column
+def writeInColumn(file, results):
+
+    for result in results:
+        file.write(results[1] + ": " + str(results[0]) + '\n')
+
+
 if __name__ =='__main__' :
     
     input_folder = 'storage/tmp/AudioClasses/'
@@ -215,46 +270,23 @@ if __name__ =='__main__' :
     # Split audio into segments
     splitAudio(start=0, indexRange=565, segmLength=segmLength, audioSegmPath=audioSegmPath)
 
-
     # Get class labels on audio segments
     audioResults = computeClassLabel(audioSegmPath, hmm_models)
 
+    # Get the base classes from the audio
+    crowd, excitedCom, unexcitedCom, whistle = getInitialClasses(segmLength=segmLength, classifResults=audioResults)
+
+    # Add and delete segments where needed
+    finalListSort = fineTuneSelection(crowd, excitedCom)
 
     # clip = VideoFileClip("storage/tmp/match.mkv")
-    videoClips, crowd, excitedCom, unexcitedCom, whistle = splitVideoNew(segmLength=segmLength, audioResults=audioResults, videoPath=videoPath)
-
-
-    # Get useful classes matrix : list of segment index and class
-    useClasses = []
-    for segment in excitedCom:
-        useClasses.append([segment, 'excitedCom'])
-    
-    for segment in crowd:
-        useClasses.append([segment, 'crowd'])
-    
-    useClassesSort = sorted(useClasses, key=lambda result: result[0])
-
-
-    # Add segment in between 2 large useful segments
-    for index in range(len(useClassesSort)):
-        if( index < (len(useClassesSort)-1) and useClassesSort[index][0] + 2*segmLength == useClassesSort[index+1][0] and
-        useClassesSort[index][1] == 'crowd' or useClassesSort[index][1] == 'excitedCom' and
-        useClassesSort[index+1][1] == 'crowd' or useClassesSort[index+1][1] == 'excitedCom'):
-            useClassesSort.append([ useClassesSort[index] + segmLength, 'Added'])
-    
-    useClassesInsertSort = sorted(useClassesSort, key=lambda result: result[0])
-
-
-    # Action on excited commenteary segment alone
-
-
-    # Action on crowd cheering segment alone
-
+    videoClips = splitVideo(segmLength=segmLength, finalList=finalListSort, videoPath=videoPath)
 
     # Delete previous classes segments distribution
     if(os.path.isfile("storage/tmp/classesSegments.txt")):
         os.remove("storage/tmp/classesSegments.txt")
     
+    # Write the classes distribution in line
     f= open("storage/tmp/classesSegments.txt","w+")
     writeToFile(f, "Crowd:", crowd)
     writeToFile(f, "ExcitedCommentary:", excitedCom)
@@ -262,14 +294,15 @@ if __name__ =='__main__' :
     writeToFile(f, "Whistle:", whistle)
     f.close()
 
-    finalVideo = concatenate_videoclips(videoClips)
+    # Write final results in column
+    f = open("storage/tmp/finalResults.txt","w+")
+    writeInColumn(f, finalListSort)
+    f.close()
 
+    finalVideo = concatenate_videoclips(videoClips)
 
     # Delete previous highlight
     if(os.path.isfile("storage/tmp/highlights.mp4")):
         os.remove("storage/tmp/highlights.mp4")
 
     finalVideo.write_videofile("storage/tmp/highlights.mp4")
-
-
-    print(audioResults)
