@@ -55,8 +55,8 @@ def getHmmModel(input_folder):
         y_words = []
         
         # Iterate through the audio files (leaving 1 file for testing in each class)
-        for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')][:1]:
-        # for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')]:
+        # for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')][:1]:
+        for filename in [x for x in os.listdir(subfolder) if x.endswith('.wav')]:
 
                 # Read the input file
                 filepath = os.path.join(subfolder, filename)
@@ -85,23 +85,6 @@ def getHmmModel(input_folder):
     return hmm_models
 
 
-def splitAudio(start, indexRange, segmLength, audioSegmPath):
-
-    # indexRange = 565
-    for index in range(indexRange):
-        ffmpeg_extract_subclip("storage/tmp/audio.wav", start+index*segmLength, start+(index+1)*segmLength, targetname= audioSegmPath + str(start+index*segmLength) + ".wav")
-
-
-def splitAudioNew(start, indexRange, audioSegmPath):
-    
-    audio = AudioFileClip(audioSegmPath)
-    audioClips = []
-    for index in range(indexRange):
-        audioClips.append(audio.subclip(start+index*5, start+(index+1)*5))
-
-    return audioClips
-
-
 # Returns the sample rate and list of audio windows with 1s interval between windows
 def getAudioWindows(audioPath, winLength):
 
@@ -113,27 +96,6 @@ def getAudioWindows(audioPath, winLength):
         audioWindows.append(audio.subclip(index, index+winLength))
 
     return sampleRate, audioWindows
-
-
-# Get video segments + lists of segments of all classes
-def getInitialClasses(segmLength, classifResults):
-    
-    crowd = []
-    excitedCom = []
-    unexcitedCom = []
-
-    for results in classifResults:
-
-        if(results[1] == 'Crowd'):
-            crowd.append(results[0])
-        
-        if(results[1] == 'ExcitedCommentary'):
-            excitedCom.append(results[0])
-        
-        if(results[1] == 'UnexcitedCommentary'):
-            unexcitedCom.append(results[0])
-
-    return crowd, excitedCom, unexcitedCom
 
 
 # Adds extra segments between important moments; treats isolated crowd and excited commentary
@@ -181,14 +143,14 @@ def fineTuneSelection(crowd, excitedCom):
 
 
 # Get video segments + lists of segments of all classes
-def splitVideo(segmLength, finalList, videoPath):
+def splitVideo(finalList, videoPath):
     
     video = VideoFileClip(videoPath)
     videoClips = []
 
     for result in finalList:
-        if(result[1] == 'Crowd' or result[1] == 'ExcitedCommentary' or result[1] == 'Extra'):
-            videoClips.append(video.subclip(int(result[0]), int(result[0])+segmLength))
+        if(result[2] == 'Crowd' or result[2] == 'ExcitedCommentary' or result[2] == 'Extra'):
+            videoClips.append(video.subclip(int(result[0]), int(result[1])))
 
     return videoClips
 
@@ -214,47 +176,17 @@ def prepareFolder(folderPath):
         os.mkdir(folderPath)
 
 
-# Get class labels
-def computeClassLabel(segments_folder, hmm_models):
-
-    results = []
-
-    # Read each clip & compute class label
-    for fileName in os.listdir(segments_folder):
-        sampling_freq, audio = wavfile.read(segments_folder+fileName)
-        mfcc_features = mfcc(audio, sampling_freq)
-        max_score = -9999999999999999999
-        output_label = None
-        
-        scoresList = []
-
-        for item in hmm_models:
-            hmm_model, label = item
-            score = hmm_model.get_score(mfcc_features)
-
-            if score > max_score:
-                max_score = score
-                output_label = label
-
-            # scoresList.append(math.trunc(score))
-
-        segmIndex = fileName[0:-4]
-        results.append([int(segmIndex), output_label])
-        # results.append([fileName, scoresList])
-    
-    # Sort results by segment index
-    sortedResults = sorted(results, key=lambda result: result[0])
-
-    return sortedResults
-
-
 # Returns the classes of initial windows : index is the window's start
 def getClassesInitWin(sampleRate, audioWindows, hmm_models):
     
     windowsClasses = []
     index = 0
     for audio in audioWindows:
-        mfcc_features = mfcc(audio, sampleRate)
+        
+        # Convert audioFileClip to array 
+        audioArray = audio.to_soundarray()
+
+        mfcc_features = mfcc(audioArray, sampleRate)
         max_score = -9999999999999999999
         output_label = None
         # scoresList = []
@@ -280,25 +212,85 @@ def getClassesInitWin(sampleRate, audioWindows, hmm_models):
 
 
 # Returns distribution of class labels for each second
-def getClassDistrib(winClasses):
+def getClassDistrib(winClasses, winLength):
 
     # List of [nbCrowd, nbExcited, nbUnexcited] with index = window's start
     distribBySec = []
     for index in range(len(winClasses)):
         distrib = [0, 0, 0]
         distribBySec.append(distrib)
-        
-    for window, index in enumerate(winClasses):
+    
+    for delta in range(winLength - 1):
+        distrib = [0, 0, 0]
+        distribBySec.append(distrib)
+    
+    index = 0
+    for window in winClasses:
         if(window[1] == 'Crowd'):
-            distribBySec[index][0] += 1
+            for delta in range(winLength):
+                distribBySec[index + delta][0] += 1
         
         if(window[1] == 'ExcitedCommentary'):
-            distribBySec[index][1] += 1
+            for delta in range(winLength):
+                distribBySec[index + delta][1] += 1
 
         if(window[1] == 'UnexcitedCommentary'):
-            distribBySec[index][2] += 1
+            for delta in range(winLength):
+                distribBySec[index + delta][2] += 1
+        
+        index += 1
     
     return distribBySec
+
+
+# Puts a class label on each second based on max of distribution
+def labelEachSec(distribBySec):
+
+    classBySec = []
+    labels = ['Crowd', 'ExcitedCommentary', 'UnexcitedCommentary']
+
+    for distrib in distribBySec:
+        maxIndex = distrib.index(max(distrib))
+        classBySec.append(labels[maxIndex])
+    
+    return classBySec
+
+
+# Concatenate identical class neigbor seconds into segments
+def concatIntoSegments(classBySec):
+
+    # List of [start, end, class]
+    classSegments = []
+
+    count = 0
+    for index in range(len(classBySec)):
+        if( index == 0 or classBySec[index] != classBySec[index-1] ):
+            classSegments.append([index, index, classBySec[index]])
+            classSegments[count][1] = index
+            count += 1
+    
+    classSegments[count - 1][1] = len(classBySec)
+
+    return classSegments
+
+
+# Returns for each class type a list of corresponding segments
+def getSegmByClass(classSegments):
+
+    crowdSegm = []
+    excitComSegm = []
+    unexComSegm = []
+    for segment in classSegments:
+        if(segment[2] == 'Crowd'):
+            crowdSegm.append([segment[0], segment[1]])
+        
+        if(segment[2] == 'ExcitedCommentary'):
+            excitComSegm.append([segment[0], segment[1]])
+
+        if(segment[2] == 'UnexcitedCommentary'):
+            unexComSegm.append([segment[0], segment[1]])
+
+    return crowdSegm, excitComSegm, unexComSegm
 
 
 # Write class info to specified txt file
@@ -320,33 +312,65 @@ def writeInColumn(file, results):
 
 if __name__ =='__main__' :
    
-    # input_folder = 'storage/tmp/AudioClasses/'
+    input_folder = 'storage/tmp/AudioClasses/'
     
-    # # Create hmm model
-    # hmm_models = getHmmModel(input_folder)
+    # Create hmm model
+    hmm_models = getHmmModel(input_folder)
     
-    # # Preparing the folder
-    # audioSegmPath = "storage/tmp/audioSegments/"
-    # videoPath = 'storage/tmp/match.mkv'
-    # prepareFolder(audioSegmPath)
-    # segmLength = 5
+    # Preparing the folder
+    audioSegmPath = "storage/tmp/audioSegments/"
+    videoPath = 'storage/tmp/match.mkv'
+    prepareFolder(audioSegmPath)
+    segmLength = 5
 
 
     # Testing area ---------------------
 
-    # sampling_freq, audio = wavfile.read("storage/tmp/audio.wav")
-    audio = AudioFileClip("storage/tmp/audio.wav")
-    signal, sampling_rate = open_audio(audio)
-    # npAudio = np.array(audio)
-    # audioWav = wavfile.read(audio)
-    print(sampling_rate)
 
-    # sampleRate, audioWindows = getAudioWindows("storage/tmp/audio.wav", segmLength)
-    # windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
-    # distribBySec = getClassDistrib(windowsClasses)
+    sampleRate, audioWindows = getAudioWindows("storage/tmp/audio.wav", segmLength)
+    windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
+    distribBySec = getClassDistrib(windowsClasses, segmLength)
+    classBySec = labelEachSec(distribBySec)
+    classSegments = concatIntoSegments(classBySec)
 
-    # for second, index in enumerate(distribBySec):
-    #     print(str(index) + " " + second[0] + " " + second[1] + " " + second[2])
+    # videoClips = splitVideo(finalList=classSegments, videoPath=videoPath)
+
+    crowdSegm, excitComSegm, unexComSegm = getSegmByClass(classSegments)
+
+    # Delete previous classes segments distribution
+    if(os.path.isfile("storage/tmp/classesSegments.txt")):
+        os.remove("storage/tmp/classesSegments.txt")
+    
+    # Write the classes distribution in line
+    f= open("storage/tmp/classesSegments.txt","w+")
+    writeToFile(f, "Crowd:", crowdSegm)
+    writeToFile(f, "ExcitedCommentary:", excitComSegm)
+    writeToFile(f, "UnexcitedCommentary:", unexComSegm)
+    f.close()
+
+    # finalVideo = concatenate_videoclips(videoClips)
+
+    # Delete previous highlight video
+    # if(os.path.isfile("storage/tmp/highlightsV3.mp4")):
+    #     os.remove("storage/tmp/highlightsV3.mp4")
+
+    # finalVideo.write_videofile("storage/tmp/highlightsV3.mp4")
+
+    for window in windowsClasses:
+        print(window)
+
+    # index = 0
+    # for second in distribBySec:
+    #     print(str(index) + " : " + str(second[0]) + " " + str(second[1]) + " " + str(second[2]))
+    #     index += 1
+
+    # index = 0
+    # for second in classBySec:
+    #     print(str(index) + " : " + str(second))
+    #     index += 1
+
+    # for segment in classSegments:
+    #     print(segment)
 
 
     # End testing area -------------------
