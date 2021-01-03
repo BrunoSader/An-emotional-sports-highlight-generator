@@ -11,6 +11,7 @@ import math
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 from moviepy.editor import AudioFileClip
 from audio2numpy import open_audio
+from scipy.io.wavfile import write
 
 
 class HMMTrainer(object):
@@ -215,26 +216,6 @@ def getClassesInitWin(sampleRate, audioWindows, hmm_models):
     return sortedWinClasses
 
 
-# def getClassTest(sampleRate, audio, hmm_models):
-    
-#     # # New read
-#     mfcc_features = mfcc(audio, sampleRate)
-#     max_score = -9999999999999999999
-#     output_label = None
-#     # scoresList = []
-
-#     for item in hmm_models:
-#         hmm_model, label = item
-#         score = hmm_model.get_score(mfcc_features)
-
-#         if score > max_score:
-#             max_score = score
-#             output_label = label
-#         # scoresList.append(math.trunc(score))
-    
-#     return output_label
-
-
 # Get class labels
 def computeClassLabel(segments_folder, hmm_models):
 
@@ -375,18 +356,22 @@ if __name__ =='__main__' :
     # Create hmm model
     hmm_models = getHmmModel(input_folder)
     
-    # Preparing the folder
-    audioSegmPath = "storage/tmp/audioSegments/"
-    videoPath = 'storage/tmp/match.mkv'
-    prepareFolder(audioSegmPath)
+    # # Preparing the folder
+    # audioSegmPath = "storage/tmp/audioSegments/"
+    # videoPath = 'storage/tmp/match.mkv'
+    # prepareFolder(audioSegmPath)
     segmLength = 5
 
 
     # Testing area ---------------------
 
 
-    # audio = AudioFileClip("storage/tmp/audio.wav")
-    # # print(audio.duration)
+    # audio = AudioFileClip("storage/tmp/audioShort.wav")
+    # soundArray = audio.to_soundarray()
+    # print(soundArray)
+    # scaled = np.int16(soundArray/np.max(np.abs(soundArray)) * 32767)
+    # write('storage/tmp/AudioFromArray.wav', audio.fps, scaled)
+
     # newsound = audio.subclip("00:00:54","00:01:00")
     # newsound.write_audiofile("storage/tmp/54to50.wav", audio.fps)
 
@@ -394,7 +379,7 @@ if __name__ =='__main__' :
     # sampleRate, audioWindows = getAudioWindows("storage/tmp/audioShort.wav", segmLength)
     
     # for index in range(len(audioWindows)):
-    #     audioWindows[index].write_audiofile("storage/tmp/audioSegments/" + str(index) + ".wav", sampleRate, 2, 2000,"pcm_s32le")
+    #     audioWindows[index].write_audiofile("storage/tmp/audioSegmentsV2/" + str(index) + ".wav", sampleRate, 2, 2000,"pcm_s32le")
 
     # sampling_freq = 0
     # newWindows = []
@@ -406,11 +391,11 @@ if __name__ =='__main__' :
     #     newWindows.append(audio)
 
     
-    # Test the audio segments from classification V2
-    testClasses = computeClassLabel(audioSegmPath, hmm_models)
+    # # Test the audio segments from classification V2
+    testClasses = computeClassLabel("storage/tmp/audioSegmentsV2/", hmm_models)
 
     # Write initial classes for windows
-    f= open("storage/tmp/testClasses.txt","w+")
+    f= open("storage/tmp/testClassesV2.txt","w+")
     for index in range(len(testClasses)):
         f.write(str(index) + ": " + str(testClasses[index]) + '\n')
     f.close()
