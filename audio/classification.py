@@ -235,6 +235,40 @@ def getClassesInitWin(sampleRate, audioWindows, hmm_models):
 #     return output_label
 
 
+# Get class labels
+def computeClassLabel(segments_folder, hmm_models):
+
+    results = []
+
+    # Read each clip & compute class label
+    for fileName in os.listdir(segments_folder):
+        sampling_freq, audio = wavfile.read(segments_folder+fileName)
+        mfcc_features = mfcc(audio, sampling_freq)
+        max_score = -9999999999999999999
+        output_label = None
+        
+        # scoresList = []
+
+        for item in hmm_models:
+            hmm_model, label = item
+            score = hmm_model.get_score(mfcc_features)
+
+            if score > max_score:
+                max_score = score
+                output_label = label
+
+            # scoresList.append(math.trunc(score))
+
+        segmIndex = fileName[0:-4]
+        results.append([int(segmIndex), output_label])
+        # results.append([fileName, scoresList])
+    
+    # Sort results by segment index
+    sortedResults = sorted(results, key=lambda result: result[0])
+
+    return sortedResults
+
+
 # Returns distribution of class labels for each second
 def getClassDistrib(winClasses, winLength):
 
@@ -357,7 +391,7 @@ if __name__ =='__main__' :
     # newsound.write_audiofile("storage/tmp/54to50.wav", audio.fps)
 
 
-    sampleRate, audioWindows = getAudioWindows("storage/tmp/audioShort.wav", segmLength)
+    # sampleRate, audioWindows = getAudioWindows("storage/tmp/audioShort.wav", segmLength)
     
     # for index in range(len(audioWindows)):
     #     audioWindows[index].write_audiofile("storage/tmp/audioSegments/" + str(index) + ".wav", sampleRate, 2, 2000,"pcm_s32le")
@@ -371,17 +405,26 @@ if __name__ =='__main__' :
     #     sampling_freq, audio = wavfile.read(filepath)
     #     newWindows.append(audio)
 
+    
+    # Test the audio segments from classification V2
+    testClasses = computeClassLabel(audioSegmPath, hmm_models)
 
-    windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
+    # Write initial classes for windows
+    f= open("storage/tmp/testClasses.txt","w+")
+    for index in range(len(testClasses)):
+        f.write(str(index) + ": " + str(testClasses[index]) + '\n')
+    f.close()
+
+    # windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
     # distribBySec = getClassDistrib(windowsClasses, segmLength)
     # classBySec = labelEachSec(distribBySec)
     # classSegments = concatIntoSegments(classBySec)
 
     # Write initial classes for windows
-    f= open("storage/tmp/initialClasses.txt","w+")
-    for index in range(len(windowsClasses)):
-        f.write(str(index) + ": " + str(windowsClasses[index]) + '\n')
-    f.close()
+    # f= open("storage/tmp/initialClasses.txt","w+")
+    # for index in range(len(windowsClasses)):
+    #     f.write(str(index) + ": " + str(windowsClasses[index]) + '\n')
+    # f.close()
 
     # # Write all segments distribution
     # f= open("storage/tmp/classDistribution.txt","w+")
