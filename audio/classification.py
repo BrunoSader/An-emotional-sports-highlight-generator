@@ -93,7 +93,8 @@ def getAudioWindows(audioPath, winLength):
     audioWindows = []
     
     for index in range(int(audio.duration - winLength)):
-        audioWindows.append(audio.subclip(index, index+winLength))
+        audioWindows.append(audio.subclip(int(index), int(index+winLength)))
+        # print(index, index+winLength)
 
     return sampleRate, audioWindows
 
@@ -183,13 +184,16 @@ def getClassesInitWin(sampleRate, audioWindows, hmm_models):
     index = 0
     for audio in audioWindows:
         
+        # # New read
+        # mfcc_features = mfcc(audio, sampleRate)
+
         # Convert audioFileClip to array 
         audioArray = audio.to_soundarray()
 
         mfcc_features = mfcc(audioArray, sampleRate)
         max_score = -9999999999999999999
         output_label = None
-        # scoresList = []
+        scoresList = []
 
         for item in hmm_models:
             hmm_model, label = item
@@ -198,10 +202,10 @@ def getClassesInitWin(sampleRate, audioWindows, hmm_models):
             if score > max_score:
                 max_score = score
                 output_label = label
-            # scoresList.append(math.trunc(score))
+            scoresList.append(math.trunc(score))
 
-        windowsClasses.append([int(index), output_label])
-        # windowsClasses.append([index, scoresList])
+        # windowsClasses.append([int(index), output_label])
+        windowsClasses.append([index, scoresList])
 
         index += 1
     
@@ -209,6 +213,26 @@ def getClassesInitWin(sampleRate, audioWindows, hmm_models):
     sortedWinClasses = sorted(windowsClasses, key=lambda result: result[0])
 
     return sortedWinClasses
+
+
+# def getClassTest(sampleRate, audio, hmm_models):
+    
+#     # # New read
+#     mfcc_features = mfcc(audio, sampleRate)
+#     max_score = -9999999999999999999
+#     output_label = None
+#     # scoresList = []
+
+#     for item in hmm_models:
+#         hmm_model, label = item
+#         score = hmm_model.get_score(mfcc_features)
+
+#         if score > max_score:
+#             max_score = score
+#             output_label = label
+#         # scoresList.append(math.trunc(score))
+    
+#     return output_label
 
 
 # Returns distribution of class labels for each second
@@ -327,26 +351,58 @@ if __name__ =='__main__' :
     # Testing area ---------------------
 
 
-    sampleRate, audioWindows = getAudioWindows("storage/tmp/audio.wav", segmLength)
-    windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
-    distribBySec = getClassDistrib(windowsClasses, segmLength)
-    classBySec = labelEachSec(distribBySec)
-    classSegments = concatIntoSegments(classBySec)
+    # audio = AudioFileClip("storage/tmp/audio.wav")
+    # # print(audio.duration)
+    # newsound = audio.subclip("00:00:54","00:01:00")
+    # newsound.write_audiofile("storage/tmp/54to50.wav", audio.fps)
 
-    # videoClips = splitVideo(finalList=classSegments, videoPath=videoPath)
 
-    crowdSegm, excitComSegm, unexComSegm = getSegmByClass(classSegments)
-
-    # Delete previous classes segments distribution
-    if(os.path.isfile("storage/tmp/classesSegments.txt")):
-        os.remove("storage/tmp/classesSegments.txt")
+    sampleRate, audioWindows = getAudioWindows("storage/tmp/audioShort.wav", segmLength)
     
-    # Write the classes distribution in line
-    f= open("storage/tmp/classesSegments.txt","w+")
-    writeToFile(f, "Crowd:", crowdSegm)
-    writeToFile(f, "ExcitedCommentary:", excitComSegm)
-    writeToFile(f, "UnexcitedCommentary:", unexComSegm)
+    # for index in range(len(audioWindows)):
+    #     audioWindows[index].write_audiofile("storage/tmp/audioSegments/" + str(index) + ".wav", sampleRate, 2, 2000,"pcm_s32le")
+
+    # sampling_freq = 0
+    # newWindows = []
+    # # Read all audio segments
+    # for filename in [x for x in os.listdir("storage/tmp/audioSegments/") if x.endswith('.wav')]:
+    #     # Read the input file
+    #     filepath = os.path.join("storage/tmp/audioSegments/", filename)
+    #     sampling_freq, audio = wavfile.read(filepath)
+    #     newWindows.append(audio)
+
+
+    windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
+    # distribBySec = getClassDistrib(windowsClasses, segmLength)
+    # classBySec = labelEachSec(distribBySec)
+    # classSegments = concatIntoSegments(classBySec)
+
+    # Write initial classes for windows
+    f= open("storage/tmp/initialClasses.txt","w+")
+    for index in range(len(windowsClasses)):
+        f.write(str(index) + ": " + str(windowsClasses[index]) + '\n')
     f.close()
+
+    # # Write all segments distribution
+    # f= open("storage/tmp/classDistribution.txt","w+")
+    # for index in range(len(distribBySec)):
+    #     f.write(str(index) + ": " + str(distribBySec[index]) + '\n')
+    # f.close()
+
+    # # # # videoClips = splitVideo(finalList=classSegments, videoPath=videoPath)
+
+    # crowdSegm, excitComSegm, unexComSegm = getSegmByClass(classSegments)
+
+    # # Delete previous classes segments distribution
+    # if(os.path.isfile("storage/tmp/classesSegments.txt")):
+    #     os.remove("storage/tmp/classesSegments.txt")
+    
+    # # Write the classes distribution in line
+    # f= open("storage/tmp/classesSegments.txt","w+")
+    # writeToFile(f, "Crowd:", crowdSegm)
+    # writeToFile(f, "ExcitedCommentary:", excitComSegm)
+    # writeToFile(f, "UnexcitedCommentary:", unexComSegm)
+    # f.close()
 
     # finalVideo = concatenate_videoclips(videoClips)
 
@@ -355,22 +411,6 @@ if __name__ =='__main__' :
     #     os.remove("storage/tmp/highlightsV3.mp4")
 
     # finalVideo.write_videofile("storage/tmp/highlightsV3.mp4")
-
-    for window in windowsClasses:
-        print(window)
-
-    # index = 0
-    # for second in distribBySec:
-    #     print(str(index) + " : " + str(second[0]) + " " + str(second[1]) + " " + str(second[2]))
-    #     index += 1
-
-    # index = 0
-    # for second in classBySec:
-    #     print(str(index) + " : " + str(second))
-    #     index += 1
-
-    # for segment in classSegments:
-    #     print(segment)
 
 
     # End testing area -------------------
