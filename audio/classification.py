@@ -379,7 +379,7 @@ if __name__ =='__main__' :
     # sampleRate, audioWindows = getAudioWindows("storage/tmp/audioShort.wav", segmLength)
     
     # for index in range(len(audioWindows)):
-    #     audioWindows[index].write_audiofile("storage/tmp/audioSegmentsV2/" + str(index) + ".wav", sampleRate, 2, 2000,"pcm_s32le")
+    #     audioWindows[index].write_audiofile("storage/tmp/audioSegmentsV3/" + str(index) + ".wav", sampleRate)
 
     # sampling_freq = 0
     # newWindows = []
@@ -391,11 +391,11 @@ if __name__ =='__main__' :
     #     newWindows.append(audio)
 
     
-    # # Test the audio segments from classification V2
-    testClasses = computeClassLabel("storage/tmp/audioSegmentsV2/", hmm_models)
+    # Test the audio segments from classification V2
+    testClasses = computeClassLabel("storage/tmp/audioSegmentsV3/", hmm_models)
 
     # Write initial classes for windows
-    f= open("storage/tmp/testClassesV2.txt","w+")
+    f= open("storage/tmp/testClassesV3CodeV3.txt","w+")
     for index in range(len(testClasses)):
         f.write(str(index) + ": " + str(testClasses[index]) + '\n')
     f.close()
