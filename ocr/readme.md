@@ -1,7 +1,7 @@
 ## Fonctionnement de l'OCR
 
 L'OCR fonctionne grâce à deux fichiers :
--main.py, qui lit la vidéo et va analyser le scoreboard en temps réel (utilise tesseract)
+-main.py, qui lit la vidéo et va analyser le scoreboard en temps réel (utilise tesseract comme OCR)
 -highlights.py, qui va sortir les highlights
 
 ### Pour faire fonctionner l'OCR :
@@ -12,7 +12,7 @@ Dans le fichier <u>main.py</u> , remplir les variables suivantes :
 **right_x**
 **lower_y**
 
-Qui sont les positions de la scoreboard dans la video, en pixels.
+Qui sont les positions de la scoreboard dans la video, en pixels. Pour l'instant : configuré pour des matchs de ligue 1 2016/2017
 
 **time_divide** 
 
@@ -30,15 +30,20 @@ Selon si le temps est positionné à gauche ou à droite du score
 
 La longueur de la video en secondes
 
-Renseigner également le nom de la vidéo à analyser dans la classe ImageHandler:   **self.video_source_path** = 'ocr/tmp/test.mkv' (par exemple)
+Renseigner également le nom de la vidéo à analyser dans filename_in :   **filename_in** = 'ocr/tmp/test.mkv' (par exemple)
+Renseigner le export path afin de pouvoir y mettre toutes les captures d'écran : **export_path** = 'ocr/img'
 
-Puis, lancer depuis le fichier source : python ocr/main.py
+
+Puis, lancer depuis le fichier source : **python ocr/main.py**
+Le programme lira tous les temps en temps réel et les mettra dans le fichier times.txt
 
 (pour l'instant : arrêter avec ctrl+C)
 
 ### Générer les highlights
+Le fichier highlights.py va prendre les temps que l'OCR a lu et les analyser.
+Les temps seront renseignés dans le fichier times.txt (dans le export_path renseigné plus haut)
 
-Les temps seront renseignés dans le fichier times.txt
+Lors d'un moment de replay, la scoreboard va disparaitre et l'OCR ne va pas pouvoir lire le temps. Il ne mettra donc pas à jour le fichier times.txt. Or, on renseigne à quelle seconde de la vidéo nous sommes actuellemnt en train de lire l'OCR (dans times.txt). Il y aura donc une grosse différence renseignée dans times.txt entre le temps i et el temps i+1.
 
 Il faut rentrer, dans le fichier **highlights.py**, les infos suivantes :
 

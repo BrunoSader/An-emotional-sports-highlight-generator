@@ -5,10 +5,10 @@ import pandas as pd
 
 
 ##Global variables
-filename='times.txt'
+filename='ocr/img/times.txt'
 highlight_length = 10
 video_path = 'ocr/highlights_videos'
-video_name = 'but.mkv'
+video_name = 'secondmatch.mkv'
 
 def readFile(filename):
     with open(filename) as f:
@@ -23,29 +23,9 @@ def highlights(list):
         if((list[i][4] != ',') and (list[i+1][4] != ',')):
             values_i = list[i].split(',')
             values_next = list[i+1].split(',')
-        
+            
         if((int(values_next[1])-int(values_i[1]) > highlight_length) and (values_i[0][3]!= '6')):
             highlights.append(values_i[1])
-    
-    return highlights
-
-
-
-def getImportantHighlights(time_list):
-    highlights = []
-    
-    for i in range(len(time_list)-1):
-        if((time_list[i][4] != ',') and (time_list[i+1][4] != ',')):
-            minutes_i = int(time_list[i][0:2])*60
-            seconds_i = int(time_list[i][3:5])
-            value = minutes_i+seconds_i
-            
-            minutes_next = int(time_list[i+1][0:2])*60
-            seconds_next = int(time_list[i+1][3:5])
-            value_next = minutes_next + seconds_next
-            if((value_next-value > highlight_length) and (time_list[i+1][3]!= '6') and (minutes_next-minutes_i<5)):
-                second_value = time_list[i].split(',')
-                highlights.append(second_value[1])
     
     return highlights
 
@@ -75,6 +55,28 @@ def concat_video(video_index):
 if __name__ =='__main__' :
     
     #print(highlights(readFile(filename)))
-    trim_video(video_name, highlights(readFile(filename)))
+    #highlights(readFile(filename))
+    concat_video(trim_video(video_name, highlights(readFile(filename))))
     #print(video_index)
     #concat_video(2)
+    
+    
+##Alternative method for calculating highlights : not used for now
+def getImportantHighlights(time_list):
+    highlights = []
+    
+    for i in range(len(time_list)-1):
+        if((time_list[i][4] != ',') and (time_list[i+1][4] != ',')):
+            minutes_i = int(time_list[i][0:2])*60
+            seconds_i = int(time_list[i][3:5])
+            value = minutes_i+seconds_i
+            
+            minutes_next = int(time_list[i+1][0:2])*60
+            seconds_next = int(time_list[i+1][3:5])
+            value_next = minutes_next + seconds_next
+            if((value_next-value > highlight_length) and (time_list[i+1][3]!= '6') and (minutes_next-minutes_i<5)):
+                second_value = time_list[i].split(',')
+                highlights.append(second_value[1])
+    
+    return highlights
+

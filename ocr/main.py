@@ -25,11 +25,14 @@ lower_y = 80
 time_divide = 240
 time_width = 65
 time_position = 'left'
-
-video_length = 360
 ##If time-position = right : scoreboard is on the left and time on the right
 ##Else if time position = left : scoreboard is on the right and time on the left
 
+
+##Global variables
+video_length = 1080
+filename_in = 'ocr/tmp/secondmatch.mkv'
+export_path = 'ocr/img'
 
 class ImageHandler(object):
 
@@ -40,8 +43,8 @@ class ImageHandler(object):
         self.teams_goals_image = None
         self.teams_goals_text = None
 
-        self.video_source_path = 'ocr/tmp/test.mkv'
-        self.export_image_path = 'ocr/img/football.jpg'
+        self.video_source_path = filename_in
+        self.export_image_path = export_path + '/football.jpg'
 
         logging.basicConfig(level=logging.WARNING)
 
@@ -96,7 +99,7 @@ class ImageHandler(object):
 
         
         self.scoreboard_image = grayscale_image[upper_y:lower_y, left_x:right_x]
-        cv2.imwrite('ocr/img/scoreboard_table.jpg', self.scoreboard_image)
+        cv2.imwrite(export_path + '/scoreboard_table.jpg', self.scoreboard_image)
         
 
         
@@ -123,17 +126,17 @@ class ImageHandler(object):
          
         if(time_position=='right'):
             self.time_image = self.scoreboard_image[:, relative_time_divide:time_end]
-            cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
+            cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
 
             self.teams_goals_image = self.scoreboard_image[:, 0:relative_time_divide]
-            cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
+            cv2.imwrite(export_path + '/teams_goals_table.jpg', self.teams_goals_image)
 
         else :
             self.time_image = self.scoreboard_image[:, 0:relative_time_divide]
-            cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
+            cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
 
             self.teams_goals_image = self.scoreboard_image[:, relative_time_divide:]
-            cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
+            cv2.imwrite(export_path + '/teams_goals_table.jpg', self.teams_goals_image)
 
         
     def enlarge_scoreboard_images(self, enlarge_ratio):
@@ -171,10 +174,10 @@ class ImageHandler(object):
         self.time_image = cv2.erode(self.time_image, kernel, iterations=1)
         self.time_image = cv2.dilate(self.time_image, kernel, iterations=1)
 
-        cv2.imwrite('ocr/img/time_ocr_ready.jpg', self.time_image)
+        cv2.imwrite(export_path + '/time_ocr_ready.jpg', self.time_image)
         
         self.time_text = pytesseract.image_to_string(
-            Image.open('ocr/img/time_ocr_ready.jpg'), config="--psm 6")
+            Image.open(export_path + '/time_ocr_ready.jpg'), config="--psm 6")
         logging.info('Time OCR text: {}'.format(self.time_text))
 
 
@@ -204,11 +207,11 @@ class ImageHandler(object):
         #self.teams_goals_image = cv2.erode(self.teams_goals_image, kernel, iterations=1)
         self.teams_goals_image = cv2.dilate(self.teams_goals_image, kernel, iterations=1)
 
-        cv2.imwrite('ocr/img/teams_goals_ocr_ready.jpg',
+        cv2.imwrite(export_path + '/teams_goals_ocr_ready.jpg',
                     self.teams_goals_image)
         
         self.teams_goals_text = pytesseract.image_to_string(
-            Image.open('ocr/img/teams_goals_ocr_ready.jpg'))
+            Image.open(export_path + '/teams_goals_ocr_ready.jpg'))
         logging.info('Teams and goals OCR text: {}'.format(self.teams_goals_text))
 
         if self.teams_goals_text is not None:
@@ -395,8 +398,9 @@ class Match(object):
         if len(self._match_time_prev) > 2:
             self._match_time_prev.pop(0)
 
+        ##Write all valid values to a text file for analysis
         self.match_time = last_valid_timeval
-        with open('times.txt', 'a') as f:
+        with open(export_path + '/times.txt', 'a') as f:
             f.write("%s,%s\n" % (self.match_time, self.index))
         return True
 
@@ -479,8 +483,14 @@ class Match(object):
                                        self.opponent_score,
                                        opponent_team_name))
 
-    
-open('times.txt', 'w').close()
+
+
+#################################################  MAIN
+
+##Empty times.txt file
+open(export_path+'/times.txt', 'w').close()
+
+##Create objects and threads
 scoreboard = ImageHandler()
 football_match = Match()
 
@@ -493,7 +503,5 @@ tScoreboardAnalyzer = threading.Thread(
 tImageExtractor.start()
 tScoreboardAnalyzer.start()
 
-tImageExtractor.join(video_length)
-tScoreboardAnalyzer.join(video_length)
-
-#getImportantHighlights(scoreboard, football_match)
+tImageExtractor.join()
+tScoreboardAnalyzer.join()
