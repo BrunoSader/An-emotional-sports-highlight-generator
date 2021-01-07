@@ -37,3 +37,7 @@ ocr/tmp/secondmatch.mkv
 ocr/tmp/test.mkv
 *.mkv
 times.txt
+
+audio/tmp/
+
+audio/train/
