@@ -19,4 +19,21 @@ scripts/
 .vscode/
 
 lib64
+*.pyc
+*.png
 .DS_Store
+ocr/football_short2.mp4
+ocr/football_short3.mp4
+*.jpg
+*.mp4
+ocr/highlights_videos/but.mkv
+ocr/highlights_videos/secondmatch.mkv
+ocr/highlights_videos/test.mkv
+ocr/highlights_videos0.mkv
+ocr/tmp/but.mkv
+ocr/tmp/fullmatchhd.mkv
+ocr/tmp/matchcut.mkv
+ocr/tmp/secondmatch.mkv
+ocr/tmp/test.mkv
+*.mkv
+times.txt
