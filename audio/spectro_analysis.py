@@ -1,4 +1,4 @@
-from .preprocessing import transform_to_features, create_feature_average, get_cluster_indices_via_strategy, get_cluster_indices_via_features, create_spectrogram, raw_spectro
+from .preprocessing import transform_to_features, create_feature_average, get_cluster_indices_via_strategy, get_cluster_indices_via_features, create_spectrogram
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from moviepy.editor import VideoFileClip, concatenate_videoclips
