@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 import cv2
-from moviepy.editor import ImageSequenceClip, AudioFileClip
+from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeVideoClip
 from moviepy.audio.AudioClip import AudioArrayClip
 
 from video.scene_detection import detect_scene
@@ -21,6 +21,7 @@ history = [0]
 last = None
 frames = []
 audioframes = []
+scenes = []
 while True:
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
@@ -42,13 +43,14 @@ while True:
                 ###TODO send to classifier
                 scene = ImageSequenceClip(frames, fps)
                 scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-                scene.write_videofile("storage/tmp/test{}.mp4".format(i))
+                #scene.write_videofile("storage/tmp/test{}.mp4".format(i))
                 scene_class = classify_scene(scene)
                 frames = []
                 audioframes = []
 
                 # Append only interesting scenes
                 if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
+                    scenes.append(scene)
                     history.append(i)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -56,9 +58,17 @@ while True:
 
         last = frame
 scene = ImageSequenceClip(frames, fps)
-scene.write_videofile("storage/tmp/test{}.mp4".format(i))
-history.append(i)
-#print(history)
+scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+#scene.write_videofile("storage/tmp/test{}.mp4".format(i))
+scene_class = classify_scene(scene)
+if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
+    scenes.append(scene)
+    history.append(i)
+
+print(history)
+
+highlight = CompositeVideoClip(scenes)
+scene.write_videofile("highlight.mp4")
 
 capture.release()
 cv2.destroyAllWindows()
