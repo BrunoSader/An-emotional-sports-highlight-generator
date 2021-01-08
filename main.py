@@ -4,12 +4,13 @@ import cv2
 from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeVideoClip, VideoFileClip
 from moviepy.audio.AudioClip import AudioArrayClip
 import time
+import os
 
 from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer
 from audio.spectro_analysis import concat_video
 
-filename = 'storage/tmp/testmatch.mp4'
+filename = 'storage/tmp/matchShort.mkv'
 capture = cv2.VideoCapture(filename)
 fps = capture.get(cv2.CAP_PROP_FPS)
 print(capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -44,6 +45,11 @@ for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         if(detect_scene(frame, last)) :
             ###TODO check ocr if possible
             ###TODO send to classifier
+
+            # Delete previous class by second
+            if(os.path.isfile("storage/tmp/classBySecond.txt")):
+                os.remove("storage/tmp/classBySecond.txt")
+
             scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), debug=True)
             # Append only interesting scenes
             if(scene_class == "ExcitedCommentary"):

@@ -360,7 +360,7 @@ def writeInColumn(file, results):
 
 
 # Get the class that dominates in the scene
-def classify_scene(audio, debug):
+def classify_scene(audio, debug=False):
 
     segmLength = 5
 
@@ -379,10 +379,6 @@ def classify_scene(audio, debug):
 
     # Write class by second distribution if in debug mode
     if(debug == True):
-        # Delete previous class by second
-        if(os.path.isfile("storage/tmp/classBySecond.txt")):
-            os.remove("storage/tmp/classBySecond.txt")
-
         # Write in new file
         f= open("storage/tmp/classBySecond.txt","w+")
         writeInColumn(f, classBySec)
