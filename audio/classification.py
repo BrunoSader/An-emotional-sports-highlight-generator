@@ -360,10 +360,9 @@ def writeInColumn(file, results):
 
 
 # Get the class that dominates in the scene
-def classify_scene(video):
+def classify_scene(audio):
 
     segmLength = 5
-    audio = video.audio
 
     # Update segment length based on scene length
     if(audio.duration < segmLength):

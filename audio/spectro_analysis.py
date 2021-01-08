@@ -1,14 +1,10 @@
-from preprocessing import transform_to_features, create_feature_average, get_cluster_indices_via_strategy, get_cluster_indices_via_features, create_spectrogram, raw_spectro
+from .preprocessing import transform_to_features, create_feature_average, get_cluster_indices_via_strategy, get_cluster_indices_via_features, create_spectrogram
 
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 import numpy as np
-
-
-import librosa
-import librosa.display
 
 def trim_video(video, indices, min_time, divider=40):
     video_index = 0
@@ -23,10 +19,10 @@ def trim_video(video, indices, min_time, divider=40):
         
     return video_index
 
-def concat_video(video_index, save_path = 'storage/tmp/highlights.mp4'):
+def concat_video(video_index, video_path='storage/trim/video', save_path = 'storage/tmp/highlights.mp4'):
     videos=[]
     for i in range(video_index):
-        videos.append(VideoFileClip('storage/trim/video'+str(i)+'.mkv'))
+        videos.append(VideoFileClip(video_path+str(i)+'.mp4'))
     
     final_video = concatenate_videoclips(videos)
     final_video.write_videofile(save_path)
