@@ -380,7 +380,7 @@ def classify_scene(audio, debug=False):
     # Write class by second distribution if in debug mode
     if(debug == True):
         # Write in new file
-        f= open("storage/tmp/classBySecond.txt","w+")
+        f= open("storage/tmp/classBySecond.txt","a")
         writeInColumn(f, classBySec)
         f.close()
 
