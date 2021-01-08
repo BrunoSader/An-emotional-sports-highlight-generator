@@ -360,7 +360,7 @@ def writeInColumn(file, results):
 
 
 # Get the class that dominates in the scene
-def classify_scene(audio):
+def classify_scene(audio, debug):
 
     segmLength = 5
 
@@ -376,6 +376,17 @@ def classify_scene(audio):
     windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
     distribBySec = getClassDistrib(windowsClasses, segmLength)
     classBySec = labelEachSec(distribBySec)
+
+    # Write class by second distribution if in debug mode
+    if(debug == True):
+        # Delete previous class by second
+        if(os.path.isfile("storage/tmp/classBySecond.txt")):
+            os.remove("storage/tmp/classBySecond.txt")
+
+        # Write in new file
+        f= open("storage/tmp/classBySecond.txt","w+")
+        writeInColumn(f, classBySec)
+        f.close()
 
     # Get nb of occurence of each class in the scene
     classFreq = {"Crowd" : 0, "ExcitedCommentary" : 0, "UnexcitedCommentary" : 0}

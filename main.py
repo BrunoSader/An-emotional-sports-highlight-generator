@@ -44,7 +44,7 @@ for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         if(detect_scene(frame, last)) :
             ###TODO check ocr if possible
             ###TODO send to classifier
-            scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+            scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), debug=True)
             # Append only interesting scenes
             if(scene_class == "ExcitedCommentary"):
                 scene = ImageSequenceClip(frames, fps)
