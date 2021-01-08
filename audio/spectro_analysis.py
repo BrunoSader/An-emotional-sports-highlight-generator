@@ -6,10 +6,6 @@ import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 import numpy as np
 
-
-import librosa
-import librosa.display
-
 def trim_video(video, indices, min_time, divider=40):
     video_index = 0
     
