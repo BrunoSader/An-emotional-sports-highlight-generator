@@ -10,6 +10,8 @@ import os, shutil
 import math
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 from moviepy.editor import AudioFileClip
+from scipy.io.wavfile import write
+import pickle
 
 
 class HMMTrainer(object):
@@ -84,42 +86,17 @@ def getHmmModel(input_folder):
     return hmm_models
 
 
-def splitAudio(start, indexRange, segmLength, audioSegmPath):
+# Returns the sample rate and list of audio windows with 1s interval between windows
+def getAudioWindows(audio, winLength):
 
-    # indexRange = 565
-    for index in range(indexRange):
-        ffmpeg_extract_subclip("storage/tmp/audio.wav", start+index*segmLength, start+(index+1)*segmLength, targetname= audioSegmPath + str(start+index*segmLength) + ".wav")
-
-
-def splitAudioNew(start, indexRange, audioSegmPath):
+    sampleRate = audio.fps
+    audioWindows = []
     
-    audio = AudioFileClip(audioSegmPath)
-    audioClips = []
-    for index in range(indexRange):
-        audioClips.append(audio.subclip(start+index*5, start+(index+1)*5))
+    for index in range(int(audio.duration - winLength)):
+        audioWindows.append(audio.subclip(int(index), int(index+winLength)))
+        # print(index, index+winLength)
 
-    return audioClips
-
-
-# Get video segments + lists of segments of all classes
-def getInitialClasses(segmLength, classifResults):
-    
-    crowd = []
-    excitedCom = []
-    unexcitedCom = []
-
-    for results in classifResults:
-
-        if(results[1] == 'Crowd'):
-            crowd.append(results[0])
-        
-        if(results[1] == 'ExcitedCommentary'):
-            excitedCom.append(results[0])
-        
-        if(results[1] == 'UnexcitedCommentary'):
-            unexcitedCom.append(results[0])
-
-    return crowd, excitedCom, unexcitedCom
+    return sampleRate, audioWindows
 
 
 # Adds extra segments between important moments; treats isolated crowd and excited commentary
@@ -167,20 +144,19 @@ def fineTuneSelection(crowd, excitedCom):
 
 
 # Get video segments + lists of segments of all classes
-def splitVideo(segmLength, finalList, videoPath):
+def splitVideo(finalList, videoPath):
     
     video = VideoFileClip(videoPath)
     videoClips = []
 
     for result in finalList:
-        if(result[1] == 'Crowd' or result[1] == 'ExcitedCommentary' or result[1] == 'Extra'):
-            videoClips.append(video.subclip(int(result[0]), int(result[0])+segmLength))
+        if(result[2] == 'Crowd' or result[2] == 'ExcitedCommentary' or result[2] == 'Extra'):
+            videoClips.append(video.subclip(int(result[0]), int(result[1])))
 
     return videoClips
 
 
-# Create folder if it doesn't exist
-# Delete content of existing folder 
+# Create folder if it doesn't exist; Delete content of existing folder 
 def prepareFolder(folderPath):
 
     if(os.path.isdir(folderPath)):
@@ -200,6 +176,53 @@ def prepareFolder(folderPath):
         os.mkdir(folderPath)
 
 
+# Returns the classes of initial windows : index is the window's start
+def getClassesInitWin(sampleRate, audioWindows, hmm_models):
+    
+    windowsClasses = []
+    index = 0
+    for audio in audioWindows:
+        
+        # # New read
+        # mfcc_features = mfcc(audio, sampleRate)
+
+        # # Convert audioFileClip to array 
+        # audioArray = audio.to_soundarray()
+
+        # Writing to wav and reading from it
+        audio.write_audiofile("storage/tmp/segm.wav", sampleRate)
+        sampling_freq, audioRead = wavfile.read("storage/tmp/segm.wav")
+
+        # Remove the exported audio
+        if(os.path.isfile("storage/tmp/segm.wav")):
+            os.remove("storage/tmp/segm.wav")
+
+
+        mfcc_features = mfcc(audioRead, sampling_freq)
+        max_score = -9999999999999999999
+        output_label = None
+        scoresList = []
+
+        for item in hmm_models:
+            hmm_model, label = item
+            score = hmm_model.get_score(mfcc_features)
+
+            if score > max_score:
+                max_score = score
+                output_label = label
+            # scoresList.append(math.trunc(score))
+
+        windowsClasses.append([int(index), output_label])
+        # windowsClasses.append([index, scoresList])
+
+        index += 1
+    
+    # Sort results by segment index
+    sortedWinClasses = sorted(windowsClasses, key=lambda result: result[0])
+
+    return sortedWinClasses
+
+
 # Get class labels
 def computeClassLabel(segments_folder, hmm_models):
 
@@ -212,7 +235,7 @@ def computeClassLabel(segments_folder, hmm_models):
         max_score = -9999999999999999999
         output_label = None
         
-        scoresList = []
+        # scoresList = []
 
         for item in hmm_models:
             hmm_model, label = item
@@ -234,6 +257,89 @@ def computeClassLabel(segments_folder, hmm_models):
     return sortedResults
 
 
+# Returns distribution of class labels for each second
+def getClassDistrib(winClasses, winLength):
+
+    # List of [nbCrowd, nbExcited, nbUnexcited] with index = window's start
+    distribBySec = []
+    for index in range(len(winClasses)):
+        distrib = [0, 0, 0]
+        distribBySec.append(distrib)
+    
+    for delta in range(winLength - 1):
+        distrib = [0, 0, 0]
+        distribBySec.append(distrib)
+    
+    index = 0
+    for window in winClasses:
+        if(window[1] == 'Crowd'):
+            for delta in range(winLength):
+                distribBySec[index + delta][0] += 1
+        
+        if(window[1] == 'ExcitedCommentary'):
+            for delta in range(winLength):
+                distribBySec[index + delta][1] += 1
+
+        if(window[1] == 'UnexcitedCommentary'):
+            for delta in range(winLength):
+                distribBySec[index + delta][2] += 1
+        
+        index += 1
+    
+    return distribBySec
+
+
+# Puts a class label on each second based on max of distribution
+def labelEachSec(distribBySec):
+
+    classBySec = []
+    labels = ['Crowd', 'ExcitedCommentary', 'UnexcitedCommentary']
+
+    for distrib in distribBySec:
+        maxIndex = distrib.index(max(distrib))
+        classBySec.append(labels[maxIndex])
+    
+    return classBySec
+
+
+# Concatenate identical class neigbor seconds into segments
+def concatIntoSegments(classBySec):
+
+    # List of [start, end, class]
+    classSegments = []
+
+    count = 0
+    for index in range(len(classBySec)):
+        if( index == 0 or classBySec[index] != classBySec[index-1] ):
+            classSegments.append([index, index, classBySec[index]])
+            if(count >= 1):
+                classSegments[count-1][1] = index
+            count += 1
+    
+    classSegments[count - 1][1] = len(classBySec)
+
+    return classSegments
+
+
+# Returns for each class type a list of corresponding segments
+def getSegmByClass(classSegments):
+
+    crowdSegm = []
+    excitComSegm = []
+    unexComSegm = []
+    for segment in classSegments:
+        if(segment[2] == 'Crowd'):
+            crowdSegm.append([segment[0], segment[1]])
+        
+        if(segment[2] == 'ExcitedCommentary'):
+            excitComSegm.append([segment[0], segment[1]])
+
+        if(segment[2] == 'UnexcitedCommentary'):
+            unexComSegm.append([segment[0], segment[1]])
+
+    return crowdSegm, excitComSegm, unexComSegm
+
+
 # Write class info to specified txt file
 def writeToFile(file, className, segmList):
 
@@ -247,62 +353,136 @@ def writeToFile(file, className, segmList):
 # Write final results in column
 def writeInColumn(file, results):
 
-    for result in results:
-        file.write(result[1] + ": " + str(result[0]) + '\n')
+    for index in range(len(results)):
+        file.write(str(index) + ": " + str(results[index]) + '\n')
+
+
+# Get the class that dominates in the scene
+def classify_scene(start, end, fps):
+
+    segmLength = 5
+    startSec = start/fps
+    endSec = end/fps
+    if((end - start)/fps < segmLength):
+        segmLength = (end - start)/fps
+    
+    # Read & cut audio
+    audio = AudioFileClip("storage/tmp/audio.wav")
+    audioScene = audio.subclip(startSec, endSec)
+
+    # Get hmm model
+    with open("storage/tmp/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
+
+    # Apply calculations
+    sampleRate, audioWindows = getAudioWindows(audioScene, segmLength)
+    windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
+    distribBySec = getClassDistrib(windowsClasses, segmLength)
+    classBySec = labelEachSec(distribBySec)
+
+    # Get nb of occurence of each class in the scene
+    classFreq = {"Crowd" : 0, "ExcitedCommentary" : 0, "UnexcitedCommentary" : 0}
+    for second in classBySec:
+        if(second == "Crowd"):
+            classFreq["Crowd"] += 1
+        
+        if(second == "ExcitedCommentary"):
+            classFreq["ExcitedCommentary"] += 1
+
+        if(second == "UnexcitedCommentary"):
+            classFreq["UnexcitedCommentary"] += 1
+    
+    # Get the label of the class with max occurence
+    keyList = list(classFreq.keys())
+    valList = list(classFreq.values())
+    posOfMax = valList.index(max(valList))
+    
+    return keyList[posOfMax]
+     
 
 
 if __name__ =='__main__' :
     
-    input_folder = 'storage/tmp/AudioClasses/'
-    
     # Create hmm model
-    hmm_models = getHmmModel(input_folder)
+    # hmm_models = getHmmModel('storage/tmp/AudioClasses/')
+
+    # Write hmm model to pickle
+    # with open("storage/tmp/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
+
+    dominantLabel = classify_scene(6550, 7200, 25, )
+    print(dominantLabel)
+
+    # # Get hmm model from pickle file
+    # with open("storage/tmp/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
     
-    # Preparing the folder
-    audioSegmPath = "storage/tmp/audioSegments/"
-    videoPath = 'storage/tmp/match.mkv'
-    prepareFolder(audioSegmPath)
-    segmLength = 5
+    # # Preparing the folder
+    # audioSegmPath = "storage/tmp/audioSegments/"
+    # videoPath = 'storage/tmp/match.mkv'
+    # segmLength = 5
 
-    # Split audio into segments
-    splitAudio(start=0, indexRange=565, segmLength=segmLength, audioSegmPath=audioSegmPath)
+    # audio = AudioFileClip("storage/tmp/audio.wav")
+    # sampleRate, audioWindows = getAudioWindows(audio, segmLength)
+    # windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
+    # distribBySec = getClassDistrib(windowsClasses, segmLength)
+    # classBySec = labelEachSec(distribBySec)
+    # classSegments = concatIntoSegments(classBySec)
 
-    # Get class labels on audio segments
-    audioResults = computeClassLabel(audioSegmPath, hmm_models)
+    # # Delete previous initial classes file 
+    # if(os.path.isfile("storage/tmp/initialClasses.txt")):
+    #     os.remove("storage/tmp/initialClasses.txt")
 
-    # Get the base classes from the audio
-    crowd, excitedCom, unexcitedCom = getInitialClasses(segmLength=segmLength, classifResults=audioResults)
+    # # Write initial classes for windows
+    # f= open("storage/tmp/initialClasses.txt","w+")
+    # writeInColumn(f, windowsClasses)
+    # f.close()
 
-    # Add and delete segments where needed
-    finalListSort = fineTuneSelection(crowd, excitedCom)
 
-    clip = VideoFileClip("storage/tmp/match.mkv")
-    videoClips = splitVideo(segmLength=segmLength, finalList=finalListSort, videoPath=videoPath)
+    # # Delete previous class distribution file
+    # if(os.path.isfile("storage/tmp/classDistribution.txt")):
+    #     os.remove("storage/tmp/classDistribution.txt")
 
-    # Delete previous classes segments distribution
-    if(os.path.isfile("storage/tmp/classesSegments.txt")):
-        os.remove("storage/tmp/classesSegments.txt")
+    # # Write all segments distribution
+    # f= open("storage/tmp/classDistribution.txt","w+")
+    # writeInColumn(f, distribBySec)
+    # f.close()
+
+
+    # # Delete previous class by second
+    # if(os.path.isfile("storage/tmp/classBySecond.txt")):
+    #     os.remove("storage/tmp/classBySecond.txt")
+
+    # # Write class by second distribution
+    # f= open("storage/tmp/classBySecond.txt","w+")
+    # writeInColumn(f, classBySec)
+    # f.close()
+
+
+    # # Delete previous class segments file (sequentially)
+    # if(os.path.isfile("storage/tmp/sequentialClassSegments.txt")):
+    #     os.remove("storage/tmp/sequentialClassSegments.txt")
+
+    # # Write sequential class segments
+    # f= open("storage/tmp/sequentialClassSegments.txt","w+")
+    # writeInColumn(f, classSegments)
+    # f.close()
+
+    # videoClips = splitVideo(finalList=classSegments, videoPath=videoPath)
+    # crowdSegm, excitComSegm, unexComSegm = getSegmByClass(classSegments)
+
+    # # Delete previous classes segments distribution
+    # if(os.path.isfile("storage/tmp/classesSegments.txt")):
+    #     os.remove("storage/tmp/classesSegments.txt")
     
-    # Write the classes distribution in line
-    f= open("storage/tmp/classesSegments.txt","w+")
-    writeToFile(f, "Crowd:", crowd)
-    writeToFile(f, "ExcitedCommentary:", excitedCom)
-    writeToFile(f, "UnexcitedCommentary:", unexcitedCom)
-    f.close()
+    # # Write the classes distribution in line
+    # f= open("storage/tmp/classesSegments.txt","w+")
+    # writeToFile(f, "Crowd:", crowdSegm)
+    # writeToFile(f, "ExcitedCommentary:", excitComSegm)
+    # writeToFile(f, "UnexcitedCommentary:", unexComSegm)
+    # f.close()
 
-    # Delete previous final results file
-    if(os.path.isfile("storage/tmp/finalResults.txt")):
-        os.remove("storage/tmp/finalResults.txt")
+    # finalVideo = concatenate_videoclips(videoClips)
 
-    # Write final results in column
-    f = open("storage/tmp/finalResults.txt","w+")
-    writeInColumn(f, finalListSort)
-    f.close()
+    # # Delete previous highlight video
+    # if(os.path.isfile("storage/tmp/highlights.mp4")):
+    #     os.remove("storage/tmp/highlights.mp4")
 
-    finalVideo = concatenate_videoclips(videoClips)
-
-    # Delete previous highlight
-    if(os.path.isfile("storage/tmp/highlights.mp4")):
-        os.remove("storage/tmp/highlights.mp4")
-
-    finalVideo.write_videofile("storage/tmp/highlights.mp4")
+    # finalVideo.write_videofile("storage/tmp/highlights.mp4")
