@@ -5,6 +5,7 @@ from moviepy.editor import ImageSequenceClip, AudioFileClip
 from moviepy.audio.AudioClip import AudioArrayClip
 
 from video.scene_detection import detect_scene
+from audio.classification import classify_scene
 
 filename = 'storage/tmp/highlights.mp4'
 capture = cv2.VideoCapture(filename)
@@ -42,7 +43,7 @@ while True:
                 scene = ImageSequenceClip(frames, fps)
                 scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
                 scene.write_videofile("storage/tmp/test{}.mp4".format(i))
-                #class = classify_scene(history[-1],i,fps)
+                scene_class = classify_scene(scene)
                 frames = []
                 audioframes = []
                 history.append(i)
