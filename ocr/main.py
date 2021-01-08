@@ -5,7 +5,6 @@ from PIL import Image
 from matplotlib import pyplot as plt
 
 import numpy as np
-import football_monitor
 import pytesseract
 import cv2
 import tkinter as tk
@@ -29,8 +28,8 @@ time_position = 'left'
 # Else if time position = left : scoreboard is on the right and time on the left
 
 # Global variables
-video_length = 301
-filename_in = 'ocr/tmp/but.mkv'
+video_length = 59
+filename_in = 'ocr/tmp/JPP.mkv'
 export_path = 'ocr/img'
 
 ##To deal with time.sleep() and effectively end the threads
