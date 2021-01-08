@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import cv2
-import face_recognition
-from keras.models import load_model
-from keras.preprocessing import image
+#import face_recognition
+#from keras.models import load_model
+#from keras.preprocessing import image
 from video.preprocessing import create_histogram
 
 def detect_scene(new_frame, last_frame) :

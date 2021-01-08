@@ -5,7 +5,7 @@ from moviepy.editor import ImageSequenceClip, AudioFileClip
 from moviepy.audio.AudioClip import AudioArrayClip
 
 from video.scene_detection import detect_scene
-from audio.classification import classify_scene
+from audio.classification import classify_scene, HMMTrainer
 
 filename = 'storage/tmp/highlights.mp4'
 capture = cv2.VideoCapture(filename)
