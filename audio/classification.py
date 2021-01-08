@@ -260,6 +260,8 @@ def computeClassLabel(segments_folder, hmm_models):
 # Returns distribution of class labels for each second
 def getClassDistrib(winClasses, winLength):
 
+    winLength = math.trunc(winLength)
+
     # List of [nbCrowd, nbExcited, nbUnexcited] with index = window's start
     distribBySec = []
     for index in range(len(winClasses)):
@@ -361,15 +363,7 @@ def writeInColumn(file, results):
 def classify_scene(video):
 
     segmLength = 5
-
-    # Delete audio file
-    if(os.path.isfile("storage/tmp/audioScene.wav")):
-        os.remove("storage/tmp/audioScene.wav")
-
-    video.audio.write_audiofile(r"storage/tmp/audioScene.wav")
-
-    # Read & cut audio
-    audio = AudioFileClip("storage/tmp/audioScene.wav")
+    audio = video.audio
 
     # Update segment length based on scene length
     if(audio.duration < segmLength):
@@ -400,10 +394,6 @@ def classify_scene(video):
     keyList = list(classFreq.keys())
     valList = list(classFreq.values())
     posOfMax = valList.index(max(valList))
-    
-    # Delete audio file
-    if(os.path.isfile("storage/tmp/audioScene.wav")):
-        os.remove("storage/tmp/audioScene.wav")
 
     return keyList[posOfMax]
      
