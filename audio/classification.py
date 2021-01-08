@@ -376,7 +376,7 @@ def classify_scene(video):
         segmLength = audio.duration
 
     # Get hmm model
-    with open("storage/tmp/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
+    with open("audio/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
 
     # Apply calculations
     sampleRate, audioWindows = getAudioWindows(audio, segmLength)
@@ -408,17 +408,17 @@ def classify_scene(video):
 if __name__ =='__main__' :
     
     # Create hmm model
-    # hmm_models = getHmmModel('storage/tmp/AudioClasses/')
+    hmm_models = getHmmModel('storage/tmp/AudioClasses/')
 
     # Write hmm model to pickle
-    # with open("storage/tmp/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
+    with open("audio/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
 
-    video = VideoFileClip("storage/tmp/match.mkv")
-    dominantLabel = classify_scene(video)
-    print(dominantLabel)
+    # video = VideoFileClip("storage/tmp/match.mkv")
+    # dominantLabel = classify_scene(video)
+    # print(dominantLabel)
 
     # # Get hmm model from pickle file
-    # with open("storage/tmp/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
+    # with open("audio/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
     
     # # Preparing the folder
     # audioSegmPath = "storage/tmp/audioSegments/"
