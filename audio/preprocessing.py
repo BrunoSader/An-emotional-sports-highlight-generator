@@ -9,7 +9,6 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from scipy import signal
 import matplotlib.colors as colors
-import librosa
 
 def __movingaverage(interval, window_size):
     window= np.ones(int(window_size))/float(window_size)
@@ -126,11 +125,3 @@ def create_spectrogram(audio_file, plot_bool=False):
         plt.xlabel('Time [sec]')
         plt.show()
     return f, t, spectro
-
-def raw_spectro(audio_file, sr=1600, plot_bool=False) :
-    print("Raw spectro")
-    sig, rate = librosa.load(audio_file, sr=sr)
-    if plot_bool :
-        plt.plot(np.linspace(0, len(sig)/rate, len(sig)), sig)
-        plt.show()
-    return (rate,sig)
