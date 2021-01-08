@@ -46,7 +46,10 @@ while True:
                 scene_class = classify_scene(scene)
                 frames = []
                 audioframes = []
-                history.append(i)
+
+                # Append only interesting scenes
+                if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
+                    history.append(i)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
