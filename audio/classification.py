@@ -362,14 +362,14 @@ def classify_scene(video):
 
     segmLength = 5
 
+    # Delete audio file
+    if(os.path.isfile("storage/tmp/audioScene.wav")):
+        os.remove("storage/tmp/audioScene.wav")
+
     video.audio.write_audiofile(r"storage/tmp/audioScene.wav")
 
     # Read & cut audio
     audio = AudioFileClip("storage/tmp/audioScene.wav")
-
-    # Delete audio file
-    if(os.path.isfile("storage/tmp/audioScene.wav")):
-        os.remove("storage/tmp/audioScene.wav")
 
     # Update segment length based on scene length
     if(audio.duration < segmLength):
@@ -401,6 +401,10 @@ def classify_scene(video):
     valList = list(classFreq.values())
     posOfMax = valList.index(max(valList))
     
+    # Delete audio file
+    if(os.path.isfile("storage/tmp/audioScene.wav")):
+        os.remove("storage/tmp/audioScene.wav")
+
     return keyList[posOfMax]
      
 
@@ -408,14 +412,14 @@ def classify_scene(video):
 if __name__ =='__main__' :
     
     # Create hmm model
-    hmm_models = getHmmModel('storage/tmp/AudioClasses/')
+    # hmm_models = getHmmModel('storage/tmp/AudioClasses/')
 
-    # Write hmm model to pickle
-    with open("audio/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
+    # # Write hmm model to pickle
+    # with open("audio/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
 
-    # video = VideoFileClip("storage/tmp/match.mkv")
-    # dominantLabel = classify_scene(video)
-    # print(dominantLabel)
+    video = VideoFileClip("storage/tmp/match.mkv")
+    dominantLabel = classify_scene(video)
+    print(dominantLabel)
 
     # # Get hmm model from pickle file
     # with open("audio/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
