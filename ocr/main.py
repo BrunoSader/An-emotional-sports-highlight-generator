@@ -15,8 +15,8 @@ import re
 import threading
 
 
-##Dimensioning values
-##We are defining global variables based on match data in order to isolate the scoreboard
+# Dimensioning values
+# We are defining global variables based on match data in order to isolate the scoreboard
 left_x = 170
 upper_y = 45
 right_x = 500
@@ -25,14 +25,17 @@ lower_y = 80
 time_divide = 240
 time_width = 65
 time_position = 'left'
-##If time-position = right : scoreboard is on the left and time on the right
-##Else if time position = left : scoreboard is on the right and time on the left
+# If time-position = right : scoreboard is on the left and time on the right
+# Else if time position = left : scoreboard is on the right and time on the left
 
-
-##Global variables
-video_length = 1080
-filename_in = 'ocr/tmp/secondmatch.mkv'
+# Global variables
+video_length = 301
+filename_in = 'ocr/tmp/but.mkv'
 export_path = 'ocr/img'
+
+##To deal with time.sleep() and effectively end the threads
+time_value = 0
+
 
 class ImageHandler(object):
 
@@ -61,20 +64,21 @@ class ImageHandler(object):
         count = 0
         #success = True
         image_lst = []
-        for i in range(video_length-1):
-            while(True):
-                vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
-                success, image = vidcap.read()
-                image_lst.append(image)
 
-                # Stop when last frame is identified
-                if count > 1:
-                    if np.array_equal(image, image_lst[1]):
-                        break
-                    image_lst.pop(0)  # Clean the list
+        while(True):
+            vidcap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+            success, image = vidcap.read()
+            image_lst.append(image)
+
+               # Stop when last frame is identified
+            if count > 1:
+                if np.array_equal(image, image_lst[1]):
+                    break
+                image_lst.pop(0)  # Clean the list
                 # save frame as PNG file
-                
-                try :
+
+            if(time_value < video_length):
+                try:
                     cv2.imwrite(self.export_image_path, image)
                     print('{}.sec reading a new frame: {} '.format(count, success))
                     count += 1
@@ -85,8 +89,7 @@ class ImageHandler(object):
 
     def localize_scoreboard_image(self):
         """
-        Finds the scoreboard table in the upper corner
-        using Canny edge detection, sets scoreboard_image
+        Finds the scoreboard table in the upper corner, sets scoreboard_image
         and exports the picture as 'scoreboard_table.jpg'
 
         :return: True when scoreboard is found
@@ -97,12 +100,11 @@ class ImageHandler(object):
         snapshot_image = cv2.imread(self.export_image_path)
         grayscale_image = cv2.cvtColor(snapshot_image, cv2.COLOR_BGR2GRAY)
 
-        
-        self.scoreboard_image = grayscale_image[upper_y:lower_y, left_x:right_x]
-        cv2.imwrite(export_path + '/scoreboard_table.jpg', self.scoreboard_image)
-        
+        self.scoreboard_image = grayscale_image[upper_y:lower_y,
+                                                left_x:right_x]
+        cv2.imwrite(export_path + '/scoreboard_table.jpg',
+                    self.scoreboard_image)
 
-        
     def split_scoreboard_image(self):
         """
         Splits the scoeboard image into two parts, sets 'time_image' and 'teams_goals_image'
@@ -112,7 +114,7 @@ class ImageHandler(object):
 
         :return: -
         """
-        
+
         '''
         self.time_image = self.scoreboard_image[:, 0:175]
         cv2.imwrite('ocr/img/time_table.jpg', self.time_image)
@@ -120,25 +122,29 @@ class ImageHandler(object):
         self.teams_goals_image = self.scoreboard_image[:, 175:]
         cv2.imwrite('ocr/img/teams_goals_table.jpg', self.teams_goals_image)
         '''
-        
+
         relative_time_divide = time_divide-left_x
         time_end = relative_time_divide + time_width
-         
-        if(time_position=='right'):
-            self.time_image = self.scoreboard_image[:, relative_time_divide:time_end]
+
+        if(time_position == 'right'):
+            self.time_image = self.scoreboard_image[:,
+                                                    relative_time_divide:time_end]
             cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
 
-            self.teams_goals_image = self.scoreboard_image[:, 0:relative_time_divide]
-            cv2.imwrite(export_path + '/teams_goals_table.jpg', self.teams_goals_image)
+            self.teams_goals_image = self.scoreboard_image[:,
+                                                           0:relative_time_divide]
+            cv2.imwrite(export_path + '/teams_goals_table.jpg',
+                        self.teams_goals_image)
 
-        else :
+        else:
             self.time_image = self.scoreboard_image[:, 0:relative_time_divide]
             cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
 
-            self.teams_goals_image = self.scoreboard_image[:, relative_time_divide:]
-            cv2.imwrite(export_path + '/teams_goals_table.jpg', self.teams_goals_image)
+            self.teams_goals_image = self.scoreboard_image[:,
+                                                           relative_time_divide:]
+            cv2.imwrite(export_path + '/teams_goals_table.jpg',
+                        self.teams_goals_image)
 
-        
     def enlarge_scoreboard_images(self, enlarge_ratio):
         """
         Enlarges 'time_table.jpg' and 'teams_goals_table.jpg'
@@ -150,7 +156,6 @@ class ImageHandler(object):
             self.time_image, (0, 0), fx=enlarge_ratio, fy=enlarge_ratio)
         self.teams_goals_image = cv2.resize(
             self.teams_goals_image, (0, 0), fx=enlarge_ratio, fy=enlarge_ratio)
-
 
     def _get_time_from_image(self):
         """
@@ -166,20 +171,19 @@ class ImageHandler(object):
         # Count nonzero to determine contrast type
         ret, threshed_img = cv2.threshold(
             self.time_image, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY_INV)
-        
+
         self.time_image = cv2.GaussianBlur(self.time_image, (3, 3), 0)
-        
+
         kernel = np.ones((3, 3), np.uint8)
-        
+
         self.time_image = cv2.erode(self.time_image, kernel, iterations=1)
         self.time_image = cv2.dilate(self.time_image, kernel, iterations=1)
 
         cv2.imwrite(export_path + '/time_ocr_ready.jpg', self.time_image)
-        
+
         self.time_text = pytesseract.image_to_string(
             Image.open(export_path + '/time_ocr_ready.jpg'), config="--psm 6")
         logging.info('Time OCR text: {}'.format(self.time_text))
-
 
         if self.time_text is not None:
             return True
@@ -199,20 +203,23 @@ class ImageHandler(object):
         # Applying Thresholding for Teams goals OCR preprocess
         ret, self.teams_goals_image = cv2.threshold(
             self.teams_goals_image, 0, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY_INV)
-        
-        self.teams_goals_image = cv2.GaussianBlur(self.teams_goals_image, (3, 3), 0)
-        
+
+        self.teams_goals_image = cv2.GaussianBlur(
+            self.teams_goals_image, (3, 3), 0)
+
         kernel = np.ones((3, 3), np.uint8)
-        
+
         #self.teams_goals_image = cv2.erode(self.teams_goals_image, kernel, iterations=1)
-        self.teams_goals_image = cv2.dilate(self.teams_goals_image, kernel, iterations=1)
+        self.teams_goals_image = cv2.dilate(
+            self.teams_goals_image, kernel, iterations=1)
 
         cv2.imwrite(export_path + '/teams_goals_ocr_ready.jpg',
                     self.teams_goals_image)
-        
+
         self.teams_goals_text = pytesseract.image_to_string(
             Image.open(export_path + '/teams_goals_ocr_ready.jpg'))
-        logging.info('Teams and goals OCR text: {}'.format(self.teams_goals_text))
+        logging.info('Teams and goals OCR text: {}'.format(
+            self.teams_goals_text))
 
         if self.teams_goals_text is not None:
             return True
@@ -244,20 +251,21 @@ class ImageHandler(object):
         cap = cv2.VideoCapture(self.video_source_path)
         count = 0
 
-        while (cap.isOpened()):
-            cap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
-            ret, frame = cap.read()
+        if(time_value<video_length):
+            while (cap.isOpened()):
+                cap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
+                ret, frame = cap.read()
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            cv2.imshow('frame', gray)
-            time.sleep(1)
-            count += 1
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                cv2.imshow('frame', gray)
+                time.sleep(1)
+                count += 1
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
-        cap.release()
-        cv2.destroyAllWindows()
+            cap.release()
+            cv2.destroyAllWindows()
 
 
 class Match(object):
@@ -284,7 +292,7 @@ class Match(object):
         self.match_time = None
         self.match_time_temp = None
         self._match_time_prev = []
-        
+
         self.index = 0
 
     def analize_scoreboard(self):
@@ -378,17 +386,21 @@ class Match(object):
         last_valid_timeval = self.match_time_temp[res.start():res.end()]
         self._match_time_prev.append(last_valid_timeval)
 
+        time_value = last_valid_timeval
+        
         # Check validity between last time values
         if last_valid_timeval < self._match_time_prev[len(self._match_time_prev)-2]:
             # Minute error occured - minute remain unchanged
             if last_valid_timeval[0:2] < self._match_time_prev[len(self._match_time_prev)-2][0:2]:
-                logging.warning("Minute error occured: minute remain unchanged!")
+                logging.warning(
+                    "Minute error occured: minute remain unchanged!")
                 fixed_minutes = self._match_time_prev[len(
                     self._match_time_prev)-2][0:2]
                 last_valid_timeval = fixed_minutes + last_valid_timeval[2:]
             else:
                 # Second error occured - auto increment second
-                logging.warning("Second error occured: auto incremented second!")
+                logging.warning(
+                    "Second error occured: auto incremented second!")
                 seconds = self._match_time_prev[len(
                     self._match_time_prev)-2][-2:]
                 fixed_seconds = str(int(seconds)+1)
@@ -398,7 +410,7 @@ class Match(object):
         if len(self._match_time_prev) > 2:
             self._match_time_prev.pop(0)
 
-        ##Write all valid values to a text file for analysis
+        # Write all valid values to a text file for analysis
         self.match_time = last_valid_timeval
         with open(export_path + '/times.txt', 'a') as f:
             f.write("%s,%s\n" % (self.match_time, self.index))
@@ -467,7 +479,6 @@ class Match(object):
         else:
             logging.info("Unable to update match info: no text received!")
 
-
     def print_all_match_info(self):
 
         home_team_name = self.home_team
@@ -478,28 +489,26 @@ class Match(object):
             opponent_team_name = self.opponent_team_fullname
 
         print('{} {} {}-{} {}'.format(self.match_time,
-                                       home_team_name,
-                                       self.home_score,
-                                       self.opponent_score,
-                                       opponent_team_name))
+                                      home_team_name,
+                                      self.home_score,
+                                      self.opponent_score,
+                                      opponent_team_name))
 
 
-
-#################################################  MAIN
-
-##Empty times.txt file
+# MAIN
+# Empty times.txt file
 open(export_path+'/times.txt', 'w').close()
 
-##Create objects and threads
+# Create objects and threads
 scoreboard = ImageHandler()
 football_match = Match()
 
 eImageExported = threading.Event()
 tImageExtractor = threading.Thread(
-        None, scoreboard.extract_image_from_video, name="ImageExtractor")
+    None, scoreboard.extract_image_from_video, name="ImageExtractor")
 tScoreboardAnalyzer = threading.Thread(
-        None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
-    
+    None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
+
 tImageExtractor.start()
 tScoreboardAnalyzer.start()
 

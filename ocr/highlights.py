@@ -6,9 +6,10 @@ import pandas as pd
 
 ##Global variables
 filename='ocr/img/times.txt'
+## The length over which an event is considered important
 highlight_length = 10
 video_path = 'ocr/highlights_videos'
-video_name = 'secondmatch.mkv'
+video_name = 'but.mkv'
 
 def readFile(filename):
     with open(filename) as f:
@@ -34,8 +35,10 @@ def trim_video(video, indices):
 
     video_index = 0
     for item in indices:
+        ##Defining start index and end index for the highlight
         start_index = int(item)-2
         stop_index = int(item)+30
+        
         ffmpeg_extract_subclip(video_path +'/'+ video, start_index , stop_index, targetname=video_path+'/' +str(video_index)+'.mkv')
         video_index+=1
 
