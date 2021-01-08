@@ -358,23 +358,28 @@ def writeInColumn(file, results):
 
 
 # Get the class that dominates in the scene
-def classify_scene(start, end, fps):
+def classify_scene(video):
 
     segmLength = 5
-    startSec = start/fps
-    endSec = end/fps
-    if((end - start)/fps < segmLength):
-        segmLength = (end - start)/fps
-    
+
+    video.audio.write_audiofile(r"storage/tmp/audioScene.wav")
+
     # Read & cut audio
-    audio = AudioFileClip("storage/tmp/audio.wav")
-    audioScene = audio.subclip(startSec, endSec)
+    audio = AudioFileClip("storage/tmp/audioScene.wav")
+
+    # Delete audio file
+    if(os.path.isfile("storage/tmp/audioScene.wav")):
+        os.remove("storage/tmp/audioScene.wav")
+
+    # Update segment length based on scene length
+    if(audio.duration < segmLength):
+        segmLength = audio.duration
 
     # Get hmm model
     with open("storage/tmp/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
 
     # Apply calculations
-    sampleRate, audioWindows = getAudioWindows(audioScene, segmLength)
+    sampleRate, audioWindows = getAudioWindows(audio, segmLength)
     windowsClasses = getClassesInitWin(sampleRate, audioWindows, hmm_models)
     distribBySec = getClassDistrib(windowsClasses, segmLength)
     classBySec = labelEachSec(distribBySec)
@@ -408,7 +413,8 @@ if __name__ =='__main__' :
     # Write hmm model to pickle
     # with open("storage/tmp/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
 
-    dominantLabel = classify_scene(6550, 7200, 25, )
+    video = VideoFileClip("storage/tmp/match.mkv")
+    dominantLabel = classify_scene(video)
     print(dominantLabel)
 
     # # Get hmm model from pickle file
