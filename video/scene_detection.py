@@ -10,7 +10,7 @@ from video.preprocessing import create_histogram
 def detect_scene(new_frame, last_frame) :
     new_histogram = create_histogram(new_frame)
     last_histogram = create_histogram(last_frame)
-    if cv2.compareHist(new_histogram, last_histogram, cv2.HISTCMP_CORREL) < 0.75 :
+    if cv2.compareHist(new_histogram, last_histogram, cv2.HISTCMP_CORREL) < 0.80 :
         return True
     return False
 
