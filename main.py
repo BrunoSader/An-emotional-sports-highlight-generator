@@ -27,6 +27,11 @@ frames = []
 audioframes = []
 scenes_count = 0
 start = time.time()
+
+# Delete previous class by second file
+if(os.path.isfile("storage/tmp/classBySecond.txt")):
+    os.remove("storage/tmp/classBySecond.txt")
+
 for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
     i+=1
     (grabbed, frame) = capture.read()
@@ -45,10 +50,6 @@ for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         if(detect_scene(frame, last)) :
             ###TODO check ocr if possible
             ###TODO send to classifier
-
-            # Delete previous class by second
-            if(os.path.isfile("storage/tmp/classBySecond.txt")):
-                os.remove("storage/tmp/classBySecond.txt")
 
             scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), debug=True)
             # Append only interesting scenes
