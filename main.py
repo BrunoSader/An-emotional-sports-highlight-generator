@@ -1,19 +1,19 @@
 import numpy as np
 import argparse
 import cv2
-from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeVideoClip
+from moviepy.editor import ImageSequenceClip, AudioFileClip, CompositeVideoClip, VideoFileClip
 from moviepy.audio.AudioClip import AudioArrayClip
 
 from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer
 
-filename = 'storage/tmp/highlights.mp4'
+filename = 'storage/tmp/match.mp4'
 capture = cv2.VideoCapture(filename)
 fps = capture.get(cv2.CAP_PROP_FPS)
 resizeWidth = 0
-
-audiofilename = 'storage/tmp/audio.wav'
-audio = AudioFileClip(audiofilename)
+video = VideoFileClip(filename)
+audio = video.audio
+del video
 fpf = int(audio.fps/fps) #frames per frame
 print(fpf)
 i=-1
@@ -50,6 +50,7 @@ while True:
 
                 # Append only interesting scenes
                 if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
+                    print('intresting scene')
                     scenes.append(scene)
                     history.append(i)
 
