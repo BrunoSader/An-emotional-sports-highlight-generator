@@ -34,7 +34,7 @@ export_path = 'ocr/img'
 filename_out = 'times.txt'
 
 
-##To deal with time.sleep() and effectively end the threads
+# To deal with time.sleep() and effectively end the threads
 time_value = 0
 
 
@@ -72,7 +72,7 @@ class ImageHandler(object):
             success, image = vidcap.read()
             image_lst.append(image)
 
-               # Stop when last frame is identified
+            # Stop when last frame is identified
             if count > 1:
                 if np.array_equal(image, image_lst[1]):
                     break
@@ -253,7 +253,7 @@ class ImageHandler(object):
         cap = cv2.VideoCapture(self.video_source_path)
         count = 0
 
-        if(time_value<video_length):
+        if(time_value < video_length):
             while (cap.isOpened()):
                 cap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
                 ret, frame = cap.read()
@@ -272,7 +272,7 @@ class ImageHandler(object):
 
 class Match(object):
 
-    def __init__(self):
+    def __init__(self, export_path, filename_out):
         self.scoreboard_text_values = None
 
         self.home_score = 0
@@ -296,6 +296,8 @@ class Match(object):
         self._match_time_prev = []
 
         self.index = 0
+        self.export_path = export_path
+        self.filename_out = filename_out
 
     def analize_scoreboard(self):
         while self.index < video_length:
@@ -389,7 +391,7 @@ class Match(object):
         self._match_time_prev.append(last_valid_timeval)
 
         time_value = last_valid_timeval
-        
+
         # Check validity between last time values
         if last_valid_timeval < self._match_time_prev[len(self._match_time_prev)-2]:
             # Minute error occured - minute remain unchanged
@@ -399,6 +401,8 @@ class Match(object):
                 fixed_minutes = self._match_time_prev[len(
                     self._match_time_prev)-2][0:2]
                 last_valid_timeval = fixed_minutes + last_valid_timeval[2:]
+                time_value = last_valid_timeval
+
             else:
                 # Second error occured - auto increment second
                 logging.warning(
@@ -407,6 +411,7 @@ class Match(object):
                     self._match_time_prev)-2][-2:]
                 fixed_seconds = str(int(seconds)+1)
                 last_valid_timeval = last_valid_timeval[:-2] + fixed_seconds
+                time_value = last_valid_timeval
 
         # Free unnecessary time values
         if len(self._match_time_prev) > 2:
@@ -414,7 +419,7 @@ class Match(object):
 
         # Write all valid values to a text file for analysis
         self.match_time = last_valid_timeval
-        with open(export_path + '/times.txt', 'a') as f:
+        with open(self.export_path + '/' + self.filename_out, 'a') as f:
             f.write("%s,%s\n" % (self.match_time, self.index))
         return True
 
@@ -499,17 +504,18 @@ class Match(object):
 
 # MAIN
 # Empty times.txt file
-open(export_path+'/times.txt', 'w').close()
-
-# Create objects and threads
-scoreboard = ImageHandler(export_path, filename_in)
-football_match = Match()
+open(export_path+'/' + filename_out, 'w').close()
 
 eImageExported = threading.Event()
+
+    # Create objects and threads
+scoreboard = ImageHandler(export_path, filename_in)
+football_match = Match(export_path, filename_out)
+
 tImageExtractor = threading.Thread(
-    None, scoreboard.extract_image_from_video, name="ImageExtractor")
+        None, scoreboard.extract_image_from_video, name="ImageExtractor")
 tScoreboardAnalyzer = threading.Thread(
-    None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
+        None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
 
 tImageExtractor.start()
 tScoreboardAnalyzer.start()
