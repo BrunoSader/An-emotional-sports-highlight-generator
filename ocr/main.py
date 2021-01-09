@@ -31,6 +31,8 @@ time_position = 'left'
 video_length = 59
 filename_in = 'ocr/tmp/JPP.mkv'
 export_path = 'ocr/img'
+filename_out = 'times.txt'
+
 
 ##To deal with time.sleep() and effectively end the threads
 time_value = 0
@@ -38,7 +40,7 @@ time_value = 0
 
 class ImageHandler(object):
 
-    def __init__(self):
+    def __init__(self, export_path, filename_in):
         self.scoreboard_image = None
         self.time_image = None
         self.time_text = None
@@ -47,6 +49,7 @@ class ImageHandler(object):
 
         self.video_source_path = filename_in
         self.export_image_path = export_path + '/football.jpg'
+        self.export_path = export_path
 
         logging.basicConfig(level=logging.WARNING)
 
@@ -101,7 +104,7 @@ class ImageHandler(object):
 
         self.scoreboard_image = grayscale_image[upper_y:lower_y,
                                                 left_x:right_x]
-        cv2.imwrite(export_path + '/scoreboard_table.jpg',
+        cv2.imwrite(self.export_path + '/scoreboard_table.jpg',
                     self.scoreboard_image)
 
     def split_scoreboard_image(self):
@@ -128,20 +131,20 @@ class ImageHandler(object):
         if(time_position == 'right'):
             self.time_image = self.scoreboard_image[:,
                                                     relative_time_divide:time_end]
-            cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
+            cv2.imwrite(self.export_path + '/time_table.jpg', self.time_image)
 
             self.teams_goals_image = self.scoreboard_image[:,
                                                            0:relative_time_divide]
-            cv2.imwrite(export_path + '/teams_goals_table.jpg',
+            cv2.imwrite(self.export_path + '/teams_goals_table.jpg',
                         self.teams_goals_image)
 
         else:
             self.time_image = self.scoreboard_image[:, 0:relative_time_divide]
-            cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
+            cv2.imwrite(self.export_path + '/time_table.jpg', self.time_image)
 
             self.teams_goals_image = self.scoreboard_image[:,
                                                            relative_time_divide:]
-            cv2.imwrite(export_path + '/teams_goals_table.jpg',
+            cv2.imwrite(self.export_path + '/teams_goals_table.jpg',
                         self.teams_goals_image)
 
     def enlarge_scoreboard_images(self, enlarge_ratio):
@@ -178,10 +181,10 @@ class ImageHandler(object):
         self.time_image = cv2.erode(self.time_image, kernel, iterations=1)
         self.time_image = cv2.dilate(self.time_image, kernel, iterations=1)
 
-        cv2.imwrite(export_path + '/time_ocr_ready.jpg', self.time_image)
+        cv2.imwrite(self.export_path + '/time_ocr_ready.jpg', self.time_image)
 
         self.time_text = pytesseract.image_to_string(
-            Image.open(export_path + '/time_ocr_ready.jpg'), config="--psm 6")
+            Image.open(self.export_path + '/time_ocr_ready.jpg'), config="--psm 6")
         logging.info('Time OCR text: {}'.format(self.time_text))
 
         if self.time_text is not None:
@@ -212,11 +215,11 @@ class ImageHandler(object):
         self.teams_goals_image = cv2.dilate(
             self.teams_goals_image, kernel, iterations=1)
 
-        cv2.imwrite(export_path + '/teams_goals_ocr_ready.jpg',
+        cv2.imwrite(self.export_path + '/teams_goals_ocr_ready.jpg',
                     self.teams_goals_image)
 
         self.teams_goals_text = pytesseract.image_to_string(
-            Image.open(export_path + '/teams_goals_ocr_ready.jpg'))
+            Image.open(self.export_path + '/teams_goals_ocr_ready.jpg'))
         logging.info('Teams and goals OCR text: {}'.format(
             self.teams_goals_text))
 
@@ -499,7 +502,7 @@ class Match(object):
 open(export_path+'/times.txt', 'w').close()
 
 # Create objects and threads
-scoreboard = ImageHandler()
+scoreboard = ImageHandler(export_path, filename_in)
 football_match = Match()
 
 eImageExported = threading.Event()
