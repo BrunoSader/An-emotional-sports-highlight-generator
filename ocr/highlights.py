@@ -36,8 +36,8 @@ def trim_video(video, indices):
     video_index = 0
     for item in indices:
         ##Defining start index and end index for the highlight
-        start_index = int(item)-2
-        stop_index = int(item)+30
+        start_index = int(item)-10
+        stop_index = int(item)+20
         
         ffmpeg_extract_subclip(video_path +'/'+ video, start_index , stop_index, targetname=video_path+'/' +str(video_index)+'.mkv')
         video_index+=1
