@@ -5,7 +5,6 @@ from PIL import Image
 from matplotlib import pyplot as plt
 
 import numpy as np
-import football_monitor
 import pytesseract
 import cv2
 import tkinter as tk
@@ -28,18 +27,12 @@ time_position = 'left'
 # If time-position = right : scoreboard is on the left and time on the right
 # Else if time position = left : scoreboard is on the right and time on the left
 
-# Global variables
-video_length = 301
-filename_in = 'ocr/tmp/but.mkv'
-export_path = 'ocr/img'
-
-##To deal with time.sleep() and effectively end the threads
-time_value = 0
-
+# To deal with time.sleep() and effectively end the threads
+#time_value = 0
 
 class ImageHandler(object):
 
-    def __init__(self):
+    def __init__(self, export_path, filename_in):
         self.scoreboard_image = None
         self.time_image = None
         self.time_text = None
@@ -48,6 +41,7 @@ class ImageHandler(object):
 
         self.video_source_path = filename_in
         self.export_image_path = export_path + '/football.jpg'
+        self.export_path = export_path
 
         logging.basicConfig(level=logging.WARNING)
 
@@ -70,19 +64,20 @@ class ImageHandler(object):
             success, image = vidcap.read()
             image_lst.append(image)
 
-               # Stop when last frame is identified
+            # Stop when last frame is identified
             if count > 1:
                 if np.array_equal(image, image_lst[1]):
                     break
                 image_lst.pop(0)  # Clean the list
                 # save frame as PNG file
 
-            if(time_value < video_length):
+            if(ocr.count < ocr.video_length):
                 try:
                     cv2.imwrite(self.export_image_path, image)
                     print('{}.sec reading a new frame: {} '.format(count, success))
                     count += 1
-                    eImageExported.set()
+                    ocr.count += 1
+                    ocr.eImageExported.set()
                     time.sleep(1)
                 except Exception as e:
                     pass
@@ -102,7 +97,7 @@ class ImageHandler(object):
 
         self.scoreboard_image = grayscale_image[upper_y:lower_y,
                                                 left_x:right_x]
-        cv2.imwrite(export_path + '/scoreboard_table.jpg',
+        cv2.imwrite(self.export_path + '/scoreboard_table.jpg',
                     self.scoreboard_image)
 
     def split_scoreboard_image(self):
@@ -129,20 +124,20 @@ class ImageHandler(object):
         if(time_position == 'right'):
             self.time_image = self.scoreboard_image[:,
                                                     relative_time_divide:time_end]
-            cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
+            cv2.imwrite(self.export_path + '/time_table.jpg', self.time_image)
 
             self.teams_goals_image = self.scoreboard_image[:,
                                                            0:relative_time_divide]
-            cv2.imwrite(export_path + '/teams_goals_table.jpg',
+            cv2.imwrite(self.export_path + '/teams_goals_table.jpg',
                         self.teams_goals_image)
 
         else:
             self.time_image = self.scoreboard_image[:, 0:relative_time_divide]
-            cv2.imwrite(export_path + '/time_table.jpg', self.time_image)
+            cv2.imwrite(self.export_path + '/time_table.jpg', self.time_image)
 
             self.teams_goals_image = self.scoreboard_image[:,
                                                            relative_time_divide:]
-            cv2.imwrite(export_path + '/teams_goals_table.jpg',
+            cv2.imwrite(self.export_path + '/teams_goals_table.jpg',
                         self.teams_goals_image)
 
     def enlarge_scoreboard_images(self, enlarge_ratio):
@@ -179,10 +174,10 @@ class ImageHandler(object):
         self.time_image = cv2.erode(self.time_image, kernel, iterations=1)
         self.time_image = cv2.dilate(self.time_image, kernel, iterations=1)
 
-        cv2.imwrite(export_path + '/time_ocr_ready.jpg', self.time_image)
+        cv2.imwrite(self.export_path + '/time_ocr_ready.jpg', self.time_image)
 
         self.time_text = pytesseract.image_to_string(
-            Image.open(export_path + '/time_ocr_ready.jpg'), config="--psm 6")
+            Image.open(self.export_path + '/time_ocr_ready.jpg'), config="--psm 6")
         logging.info('Time OCR text: {}'.format(self.time_text))
 
         if self.time_text is not None:
@@ -213,11 +208,11 @@ class ImageHandler(object):
         self.teams_goals_image = cv2.dilate(
             self.teams_goals_image, kernel, iterations=1)
 
-        cv2.imwrite(export_path + '/teams_goals_ocr_ready.jpg',
+        cv2.imwrite(self.export_path + '/teams_goals_ocr_ready.jpg',
                     self.teams_goals_image)
 
         self.teams_goals_text = pytesseract.image_to_string(
-            Image.open(export_path + '/teams_goals_ocr_ready.jpg'))
+            Image.open(self.export_path + '/teams_goals_ocr_ready.jpg'))
         logging.info('Teams and goals OCR text: {}'.format(
             self.teams_goals_text))
 
@@ -251,7 +246,7 @@ class ImageHandler(object):
         cap = cv2.VideoCapture(self.video_source_path)
         count = 0
 
-        if(time_value<video_length):
+        if(ocr.time_value < ocr.video_length):
             while (cap.isOpened()):
                 cap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
                 ret, frame = cap.read()
@@ -270,7 +265,7 @@ class ImageHandler(object):
 
 class Match(object):
 
-    def __init__(self):
+    def __init__(self, export_path, filename_out):
         self.scoreboard_text_values = None
 
         self.home_score = 0
@@ -293,21 +288,21 @@ class Match(object):
         self.match_time_temp = None
         self._match_time_prev = []
 
-        self.index = 0
+        self.export_path = export_path
+        self.filename_out = filename_out
 
     def analize_scoreboard(self):
-        while self.index < video_length:
+        while (ocr.count < ocr.video_length):
             try:
-                eImageExported.wait()
-                scoreboard.localize_scoreboard_image()
-                scoreboard.split_scoreboard_image()
-                scoreboard.enlarge_scoreboard_images(3)
-                OCR_text = scoreboard.get_scoreboard_texts()
-                football_match.provide_scoreboard_text_values(OCR_text)
-                football_match.update_all_match_info()
-                football_match.print_all_match_info()
-                eImageExported.clear()
-                self.index += 1
+                ocr.eImageExported.wait()
+                ocr.scoreboard.localize_scoreboard_image()
+                ocr.scoreboard.split_scoreboard_image()
+                ocr.scoreboard.enlarge_scoreboard_images(3)
+                OCR_text = ocr.scoreboard.get_scoreboard_texts()
+                ocr.football_match.provide_scoreboard_text_values(OCR_text)
+                ocr.football_match.update_all_match_info()
+                ocr.football_match.print_all_match_info()
+                ocr.eImageExported.clear()
             except Exception as e:
                 logging.warning(e)
 
@@ -386,8 +381,6 @@ class Match(object):
         last_valid_timeval = self.match_time_temp[res.start():res.end()]
         self._match_time_prev.append(last_valid_timeval)
 
-        time_value = last_valid_timeval
-        
         # Check validity between last time values
         if last_valid_timeval < self._match_time_prev[len(self._match_time_prev)-2]:
             # Minute error occured - minute remain unchanged
@@ -397,6 +390,7 @@ class Match(object):
                 fixed_minutes = self._match_time_prev[len(
                     self._match_time_prev)-2][0:2]
                 last_valid_timeval = fixed_minutes + last_valid_timeval[2:]
+
             else:
                 # Second error occured - auto increment second
                 logging.warning(
@@ -412,8 +406,8 @@ class Match(object):
 
         # Write all valid values to a text file for analysis
         self.match_time = last_valid_timeval
-        with open(export_path + '/times.txt', 'a') as f:
-            f.write("%s,%s\n" % (self.match_time, self.index))
+        with open(self.export_path + '/' + self.filename_out, 'a') as f:
+            f.write("%s,%s\n" % (self.match_time, ocr.count))
         return True
 
     def update_match_score(self):
@@ -497,20 +491,32 @@ class Match(object):
 
 # MAIN
 # Empty times.txt file
-open(export_path+'/times.txt', 'w').close()
+def ocr(export_path, filename_in, filename_out, video_length):
+    ocr.count = 0
+    ocr.video_length = video_length
+    open(export_path+'/' + filename_out, 'w').close()
 
-# Create objects and threads
-scoreboard = ImageHandler()
-football_match = Match()
+    ocr.eImageExported = threading.Event()
 
-eImageExported = threading.Event()
-tImageExtractor = threading.Thread(
-    None, scoreboard.extract_image_from_video, name="ImageExtractor")
-tScoreboardAnalyzer = threading.Thread(
-    None, football_match.analize_scoreboard, name="ScoreboardAnalyzer")
+        # Create objects and threads
+    ocr.scoreboard = ImageHandler(export_path, filename_in)
+    ocr.football_match = Match(export_path, filename_out)
 
-tImageExtractor.start()
-tScoreboardAnalyzer.start()
+    ocr.tImageExtractor = threading.Thread(
+            None, ocr.scoreboard.extract_image_from_video, name="ImageExtractor")
+    ocr.tScoreboardAnalyzer = threading.Thread(
+            None, ocr.football_match.analize_scoreboard, name="ScoreboardAnalyzer")
 
-tImageExtractor.join()
-tScoreboardAnalyzer.join()
+    ocr.tImageExtractor.start()
+    ocr.tScoreboardAnalyzer.start()
+
+    ocr.tImageExtractor.join()
+    ocr.tScoreboardAnalyzer.join()
+
+
+if __name__ == '__main__' :
+    filename_in = 'ocr/tmp/secondmatch.mkv'
+    export_path = 'ocr/img'
+    filename_out = 'times.txt'
+    video_length = 1080
+    ocr(export_path, filename_in, filename_out, 1080)

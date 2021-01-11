@@ -9,7 +9,7 @@ filename='ocr/img/times.txt'
 ## The length over which an event is considered important
 highlight_length = 10
 video_path = 'ocr/highlights_videos'
-video_name = 'but.mkv'
+video_name = 'secondmatch.mkv'
 
 def readFile(filename):
     with open(filename) as f:
@@ -27,7 +27,7 @@ def highlights(list):
             
         if((int(values_next[1])-int(values_i[1]) > highlight_length) and (values_i[0][3]!= '6')):
             highlights.append(values_i[1])
-    
+        
     return highlights
 
 
@@ -36,8 +36,8 @@ def trim_video(video, indices):
     video_index = 0
     for item in indices:
         ##Defining start index and end index for the highlight
-        start_index = int(item)-2
-        stop_index = int(item)+30
+        start_index = int(item)-10
+        stop_index = int(item)+10
         
         ffmpeg_extract_subclip(video_path +'/'+ video, start_index , stop_index, targetname=video_path+'/' +str(video_index)+'.mkv')
         video_index+=1
@@ -64,22 +64,3 @@ if __name__ =='__main__' :
     #concat_video(2)
     
     
-##Alternative method for calculating highlights : not used for now
-def getImportantHighlights(time_list):
-    highlights = []
-    
-    for i in range(len(time_list)-1):
-        if((time_list[i][4] != ',') and (time_list[i+1][4] != ',')):
-            minutes_i = int(time_list[i][0:2])*60
-            seconds_i = int(time_list[i][3:5])
-            value = minutes_i+seconds_i
-            
-            minutes_next = int(time_list[i+1][0:2])*60
-            seconds_next = int(time_list[i+1][3:5])
-            value_next = minutes_next + seconds_next
-            if((value_next-value > highlight_length) and (time_list[i+1][3]!= '6') and (minutes_next-minutes_i<5)):
-                second_value = time_list[i].split(',')
-                highlights.append(second_value[1])
-    
-    return highlights
-
