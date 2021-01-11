@@ -28,8 +28,7 @@ time_position = 'left'
 # Else if time position = left : scoreboard is on the right and time on the left
 
 # To deal with time.sleep() and effectively end the threads
-time_value = 0
-
+#time_value = 0
 
 class ImageHandler(object):
 
@@ -72,7 +71,7 @@ class ImageHandler(object):
                 image_lst.pop(0)  # Clean the list
                 # save frame as PNG file
 
-            if(time_value < ocr.video_length):
+            if(ocr.index < ocr.video_length):
                 try:
                     cv2.imwrite(self.export_image_path, image)
                     print('{}.sec reading a new frame: {} '.format(count, success))
@@ -246,7 +245,7 @@ class ImageHandler(object):
         cap = cv2.VideoCapture(self.video_source_path)
         count = 0
 
-        if(time_value < ocr.video_length):
+        if(ocr.index < ocr.video_length):
             while (cap.isOpened()):
                 cap.set(cv2.CAP_PROP_POS_MSEC, (count * 1000))
                 ret, frame = cap.read()
@@ -305,6 +304,7 @@ class Match(object):
                 ocr.football_match.print_all_match_info()
                 ocr.eImageExported.clear()
                 self.index += 1
+                ocr.index = self.index
             except Exception as e:
                 logging.warning(e)
 
@@ -383,8 +383,6 @@ class Match(object):
         last_valid_timeval = self.match_time_temp[res.start():res.end()]
         self._match_time_prev.append(last_valid_timeval)
 
-        time_value = last_valid_timeval
-
         # Check validity between last time values
         if last_valid_timeval < self._match_time_prev[len(self._match_time_prev)-2]:
             # Minute error occured - minute remain unchanged
@@ -394,7 +392,6 @@ class Match(object):
                 fixed_minutes = self._match_time_prev[len(
                     self._match_time_prev)-2][0:2]
                 last_valid_timeval = fixed_minutes + last_valid_timeval[2:]
-                time_value = last_valid_timeval
 
             else:
                 # Second error occured - auto increment second
@@ -404,7 +401,6 @@ class Match(object):
                     self._match_time_prev)-2][-2:]
                 fixed_seconds = str(int(seconds)+1)
                 last_valid_timeval = last_valid_timeval[:-2] + fixed_seconds
-                time_value = last_valid_timeval
 
         # Free unnecessary time values
         if len(self._match_time_prev) > 2:
@@ -498,6 +494,7 @@ class Match(object):
 # MAIN
 # Empty times.txt file
 def ocr(export_path, filename_in, filename_out, video_length):
+    ocr.index = 0
     ocr.video_length = video_length
     open(export_path+'/' + filename_out, 'w').close()
 
@@ -520,8 +517,8 @@ def ocr(export_path, filename_in, filename_out, video_length):
 
 
 if __name__ == '__main__' :
-    filename_in = 'ocr/tmp/but.mkv'
+    filename_in = 'ocr/tmp/secondmatch.mkv'
     export_path = 'ocr/img'
     filename_out = 'times.txt'
-    video_length = 300
-    ocr(export_path, filename_in, filename_out, 300)
+    video_length = 1080
+    ocr(export_path, filename_in, filename_out, 1080)
