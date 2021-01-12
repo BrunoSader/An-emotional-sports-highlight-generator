@@ -9,6 +9,8 @@ import os
 from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer
 from audio.spectro_analysis import concat_video
+from ocr.final_ocr import ocr
+from ocr.highlights import generate_highlights
 
 filename = 'storage/tmp/matchShort.mkv'
 capture = cv2.VideoCapture(filename)
@@ -83,3 +85,4 @@ print("Elapsed time is  {}".format(end-start))
 
 capture.release()
 cv2.destroyAllWindows()
+
