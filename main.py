@@ -86,3 +86,7 @@ print("Elapsed time is  {}".format(end-start))
 capture.release()
 cv2.destroyAllWindows()
 
+#ocr('ocr/img', 'ocr/tmp/secondmatch.mkv', 'times.txt', 1080)
+#generate_highlights('ocr/highlights_videos', 'secondmatch.mkv', 'ocr/img/times.txt', 10)
+
+
