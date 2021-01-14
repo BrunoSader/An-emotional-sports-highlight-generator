@@ -121,16 +121,19 @@ def get_folder_content(storage_client, blobName, bucketName, savePath='storage/t
 if __name__=='__main__' :
 
     client = connect_db()
-    get_video(client,'epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/1.mkv')
-    video_to_audio()
+    # get_video(client,'epl/2016-2017/2016-08-14 - 18-00 Arsenal 3 - 4 Liverpool/1.mkv')
+    # video_to_audio()
+    
+    # filesList = list_files(client, bucketName='football_matches')
+    # print(filesList)
 
-    # upload_folder_content(client, blobName='classification/v4/AudioClasses/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses/')
+    # upload_folder_content(client, blobName='classification/v5/TrainHmmNormal/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses/')
 
-    # get_folder_content(client, blobName='classification/v4/AudioClasses/', bucketName='football_matches', savePath='storage/tmp/AudioClasses/')
+    # get_folder_content(client, blobName='classification/v3/AudioClasses/UnexcitedCommentary', bucketName='football_matches', savePath='storage/tmp/AudioClassesUnex/')
 
-    # get_video(client, blobName='france_ligue-1/2016-2017/2016-08-28 - 21-45 Monaco 3 - 1 Paris SG/1.mkv', bucketName='football_matches', savePath='storage/tmp/match.mkv')
+    # get_video(client, blobName='france_ligue-1/2016-2017/2017-02-10 - 22-45 Bordeaux 0 - 3 Paris SG/2.mkv', bucketName='football_matches', savePath='storage/tmp/matchBordeauxPSG2.mkv')
 
-    # video_to_audio(video_path='storage/tmp/match.mkv', audio_path='storage/tmp/audio.wav', delete_video=False)
+    # video_to_audio(video_path='storage/tmp/matchPSGMetz.mkv', audio_path='storage/tmp/audio.wav', delete_video=False)
 
     
     
