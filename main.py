@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 
 from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer
-from audio.CNN_classifier import predict
+# from audio.CNN_classifier import predict
 from audio.spectro_analysis import concat_video
 from ocr.final_ocr import ocr
 from ocr.highlights_compare import generate_highlights_compare
@@ -38,68 +38,91 @@ audioframes = []
 scenes_count = 0
 start = time.time()
 
-# Delete previous class by second file
+winLen = 3
+startScene = 0
+endScene = 0
+
+if(os.path.isfile("storage/tmp/initialClasses.txt")):
+        os.remove("storage/tmp/initialClasses.txt")
+    
+if(os.path.isfile("storage/tmp/classDistribution.txt")):
+    os.remove("storage/tmp/classDistribution.txt")
+
 if(os.path.isfile("storage/tmp/classBySecond.txt")):
     os.remove("storage/tmp/classBySecond.txt")
 
+if(os.path.isfile("storage/tmp/classByScene.txt")):
+    os.remove("storage/tmp/classByScene.txt")
+
+f= open("storage/tmp/classByScene.txt","a")
+
+if(os.path.isdir("storage/tmp/tmpMain/")):
+    for filename in os.listdir("storage/tmp/tmpMain/"):
+        filepath = os.path.join("storage/tmp/tmpMain/", filename)
+        os.remove(filepath)
+
 if args.model == 'CNN' :
-    for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
-        i+=1
-        (grabbed, frame) = capture.read()
-        if not grabbed:
-            break
+    # Test code
+    print("test")
 
-        # Resize frame to width, if specified
-        if resizeWidth > 0:
-            (height, width) = frame.shape[:2]
-            resizeHeight = int(float(resizeWidth / width) * height)
-            frame = cv2.resize(frame, (resizeWidth, resizeHeight),
-                interpolation=cv2.INTER_AREA)
-        if i > 0 :
-            if(detect_scene(frame, last)) :
-                scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-                d = defaultdict(list)
-                for k, v in scene_classes:
-                    d[v].append(k)
-                l = [(i, np.mean(j)) for i,j in d.items()]
-                score = dict(l)
-                counter = Counter(elem[1] for elem in scene_classes[-5:])
-                if(('Excited' in dict(counter.most_common(1)) or ('Excited' in dict(counter.most_common(2)) and 'Crowd' in dict(counter.most_common(2)))) and score['Excited'] > 0.85):
-                    scene = ImageSequenceClip(frames, fps)
-                    scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-                    scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-                    scenes_count+=1
-                    history.append(i)
-                    start_indices.append(i-len(frames))
-                frames.clear()
-                audioframes.clear()
+    # for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
+    #     i+=1
+    #     (grabbed, frame) = capture.read()
+    #     if not grabbed:
+    #         break
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    #     # Resize frame to width, if specified
+    #     if resizeWidth > 0:
+    #         (height, width) = frame.shape[:2]
+    #         resizeHeight = int(float(resizeWidth / width) * height)
+    #         frame = cv2.resize(frame, (resizeWidth, resizeHeight),
+    #             interpolation=cv2.INTER_AREA)
+    #     if i > 0 :
+    #         if(detect_scene(frame, last)) :
+    #             scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+    #             d = defaultdict(list)
+    #             for k, v in scene_classes:
+    #                 d[v].append(k)
+    #             l = [(i, np.mean(j)) for i,j in d.items()]
+    #             score = dict(l)
+    #             counter = Counter(elem[1] for elem in scene_classes[-5:])
+    #             if(('Excited' in dict(counter.most_common(1)) or ('Excited' in dict(counter.most_common(2)) and 'Crowd' in dict(counter.most_common(2)))) and score['Excited'] > 0.85):
+    #                 scene = ImageSequenceClip(frames, fps)
+    #                 scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+    #                 scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+    #                 scenes_count+=1
+    #                 history.append(i)
+    #                 start_indices.append(i-len(frames))
+    #             frames.clear()
+    #             audioframes.clear()
 
-        audioframes.extend(chunk)
-        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        last = frame
+    #     if cv2.waitKey(1) & 0xFF == ord('q'):
+    #         break
 
-    d = defaultdict(list)
-    for k, v in scene_classes:
-        d[v].append(k)
-    l = [(i, np.mean(j)) for i,j in d.items()]
-    score = dict(l)
-    counter = Counter(elem[1] for elem in scene_classes)
-    if('Excited' in dict(counter.most_common(1)) and score['Excited'] > 0.9):
-        scene = ImageSequenceClip(frames, fps)
-        scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-        scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-        scenes_count+=1
-        history.append(i)
-        start_indices.append(i-len(frames))
-    frames.clear()
-    audioframes.clear()
+    #     audioframes.extend(chunk)
+    #     frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    #     last = frame
+
+    # d = defaultdict(list)
+    # for k, v in scene_classes:
+    #     d[v].append(k)
+    # l = [(i, np.mean(j)) for i,j in d.items()]
+    # score = dict(l)
+    # counter = Counter(elem[1] for elem in scene_classes)
+    # if('Excited' in dict(counter.most_common(1)) and score['Excited'] > 0.9):
+    #     scene = ImageSequenceClip(frames, fps)
+    #     scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+    #     scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+    #     scenes_count+=1
+    #     history.append(i)
+    #     start_indices.append(i-len(frames))
+    # frames.clear()
+    # audioframes.clear()
 
 elif args.model == 'HMM' :
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
+        endScene = i
         (grabbed, frame) = capture.read()
 
         if not grabbed:
@@ -113,7 +136,16 @@ elif args.model == 'HMM' :
                 interpolation=cv2.INTER_AREA)
         if i > 0 :
             if(detect_scene(frame, last)) :
-                scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), debug=True)
+                
+                # Write audio & read with audioclip
+                clip = AudioArrayClip(np.asarray(audioframes), fps=audio.fps)
+                clip.write_audiofile('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav', audio.fps)
+                scene = AudioFileClip('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav')
+                scene_class = classify_scene(scene, winLen, debug=True)
+                f.write(str(startScene/25) + '-' + str(endScene/25) + ' ' + scene_class + '\n')
+                
+
+                # scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), winLen, debug=True)
                 # Append only interesting scenes
                 if(scene_class == "ExcitedCommentary"):
                     scene = ImageSequenceClip(frames, fps)
@@ -125,6 +157,7 @@ elif args.model == 'HMM' :
 
                 frames.clear()
                 audioframes.clear()
+                startScene = i
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -132,7 +165,7 @@ elif args.model == 'HMM' :
         frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
         
-    scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+    scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), winLen, False)
     if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
         scene = ImageSequenceClip(frames, fps)
         scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
