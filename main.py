@@ -45,7 +45,6 @@ if args.model == 'CNN' :
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
         (grabbed, frame) = capture.read()
-        audioframes.extend(chunk)
         if not grabbed:
             break
 
@@ -75,9 +74,11 @@ if args.model == 'CNN' :
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        
+
+        audioframes.extend(chunk)
         frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
+
     d = defaultdict(list)
     for k, v in scene_classes:
         d[v].append(k)
@@ -97,7 +98,7 @@ elif args.model == 'HMM' :
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
         (grabbed, frame) = capture.read()
-        audioframes.extend(chunk)
+
         if not grabbed:
             break
 
@@ -109,9 +110,6 @@ elif args.model == 'HMM' :
                 interpolation=cv2.INTER_AREA)
         if i > 0 :
             if(detect_scene(frame, last)) :
-                ###TODO check ocr if possible
-                ###TODO send to classifier
-
                 scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), debug=True)
                 # Append only interesting scenes
                 if(scene_class == "ExcitedCommentary"):
@@ -125,9 +123,10 @@ elif args.model == 'HMM' :
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+        audioframes.extend(chunk)
         frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
+        
     scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
     if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
         scene = ImageSequenceClip(frames, fps)
