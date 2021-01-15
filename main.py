@@ -55,7 +55,6 @@ if args.model == 'CNN' :
             resizeHeight = int(float(resizeWidth / width) * height)
             frame = cv2.resize(frame, (resizeWidth, resizeHeight),
                 interpolation=cv2.INTER_AREA)
-        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         if i > 0 :
             if(detect_scene(frame, last)) :
                 scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
@@ -76,7 +75,8 @@ if args.model == 'CNN' :
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+        
+        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
     d = defaultdict(list)
     for k, v in scene_classes:
@@ -107,7 +107,6 @@ elif args.model == 'HMM' :
             resizeHeight = int(float(resizeWidth / width) * height)
             frame = cv2.resize(frame, (resizeWidth, resizeHeight),
                 interpolation=cv2.INTER_AREA)
-        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         if i > 0 :
             if(detect_scene(frame, last)) :
                 ###TODO check ocr if possible
@@ -127,6 +126,7 @@ elif args.model == 'HMM' :
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
     scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
     if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
