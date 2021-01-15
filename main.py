@@ -13,7 +13,7 @@ from audio.classification import classify_scene, HMMTrainer
 from audio.CNN_classifier import predict
 from audio.spectro_analysis import concat_video
 from ocr.final_ocr import ocr
-from ocr.highlights import generate_highlights_compare
+from ocr.highlights_compare import generate_highlights_compare
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default="CNN", help="CNN, HMM")
