@@ -18,7 +18,7 @@ def highlights(list):
             values_i = list[i].split(',')
             values_next = list[i+1].split(',')
             
-        if((int(values_next[1])-int(values_i[1]) > generate_highlights.highlight_length) and (values_i[0][3]!= '6')):
+        if((int(values_next[1])-int(values_i[1]) > generate_highlights_compare.highlight_length) and (values_i[0][3]!= '6')):
             highlights.append(values_i[1])
         
     return highlights
@@ -30,11 +30,12 @@ def trim_video(video, indices):
     if indices : 
         for item in indices:
             ##Defining start index and end index for the highlight
-            start_index = int(item)-10
-            stop_index = int(item)+10
-            
-            ffmpeg_extract_subclip(generate_highlights.video_path +'/'+ video, start_index , stop_index, targetname=generate_highlights.video_path+'/' +str(video_index)+'.mkv')
-            video_index+=1
+                if ((item not in generate_highlights_compare.start_indices)):
+                    start_index = int(item)-10
+                    stop_index = int(item)+10
+                    
+                    ffmpeg_extract_subclip(generate_highlights_compare.video_path +'/'+ video, start_index , stop_index, targetname=generate_highlights_compare.video_path+'/' +str(video_index)+'.mkv')
+                    video_index+=1
 
     return video_index
 
@@ -43,10 +44,10 @@ def concat_video(video_index):
     videos=[]
     if video_index > 0 :
         for i in range(video_index):
-            videos.append(VideoFileClip(generate_highlights.video_path+ '/' + str(i)+'.mkv'))
+            videos.append(VideoFileClip(generate_highlights_compare.video_path+ '/' + str(i)+'.mkv'))
         
         final_video = concatenate_videoclips(videos)
-        final_video.write_videofile(generate_highlights.video_path+ '/' +'highlights.mp4')
+        final_video.write_videofile(generate_highlights_compare.video_path+ '/' +'highlights.mp4')
             
 
 def generate_highlights(video_path, video_name, filename, highlight_length):
@@ -54,6 +55,11 @@ def generate_highlights(video_path, video_name, filename, highlight_length):
     generate_highlights.highlight_length = highlight_length
     concat_video(trim_video(video_name, highlights(readFile(filename))))
 
+def generate_highlights_compare(video_path, video_name, filename, highlight_length, start_indices):
+    generate_highlights_compare.video_path = video_path
+    generate_highlights_compare.highlight_length = highlight_length
+    generate_highlights_compare.start_indices = start_indices
+    concat_video(trim_video(video_name, highlights(readFile(filename))))
     
 if __name__ =='__main__' :
     filename='ocr/img/times.txt'

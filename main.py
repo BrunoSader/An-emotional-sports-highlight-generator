@@ -10,7 +10,7 @@ from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer
 from audio.spectro_analysis import concat_video
 from ocr.final_ocr import ocr
-from ocr.highlights import generate_highlights
+from ocr.highlights import generate_highlights_compare
 
 filename = 'storage/tmp/matchShort.mkv'
 capture = cv2.VideoCapture(filename)
@@ -24,6 +24,7 @@ fpf = int(audio.fps/fps) #frames per frame
 print(fpf)
 i=-1
 history = [0]
+start_indices = [0]
 last = None
 frames = []
 audioframes = []
@@ -40,7 +41,7 @@ for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
     audioframes.extend(chunk)
     if not grabbed:
         break
-
+    
     # Resize frame to width, if specified
     if resizeWidth > 0:
         (height, width) = frame.shape[:2]
@@ -61,6 +62,7 @@ for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
                 scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
                 scenes_count+=1
                 history.append(i)
+                start_indices.append(i-len(frames))
             frames.clear()
             audioframes.clear()
 
@@ -73,10 +75,12 @@ if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
     scene = ImageSequenceClip(frames, fps)
     scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
     history.append(i)
+    start_indices.append(i-len(frames))
 
 concat_video(scenes_count, video_path='storage/tmp/scenes/scene', save_path='highlights.mp4')
 
 print(history)
+
 
 scene.write_videofile("highlight.mp4")
 end = time.time()
@@ -86,7 +90,7 @@ print("Elapsed time is  {}".format(end-start))
 capture.release()
 cv2.destroyAllWindows()
 
-#ocr('ocr/img', 'ocr/tmp/secondmatch.mkv', 'times.txt', 1080)
-#generate_highlights('ocr/highlights_videos', 'secondmatch.mkv', 'ocr/img/times.txt', 10)
+#ocr('ocr/img', filename, 'times.txt', 300)
+#generate_highlights_compare('ocr/highlights_videos', 'secondmatch.mkv', 'ocr/img/times.txt', 10, start_indices)
 
 
