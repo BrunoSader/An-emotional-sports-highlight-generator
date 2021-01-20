@@ -6,9 +6,9 @@ import librosa
 from keras.models import load_model
 
 classes = ['Crowd', 'Excited', 'Unexcited']
-model = load_model('audio/cnn_model_v01.h5', compile=False)
+model = load_model('audio/cnn_model.h5', compile=False)
 model.compile(loss='categorical_crossentropy',optimizer='adam',metrics=['accuracy'])
-model.load_weights("audio/cnn_weights_v01.h5")
+model.load_weights("audio/cnn_weights.h5")
 
 def predict(audio):
     tmpfile = 'storage/tmp/tmp.wav'
