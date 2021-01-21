@@ -10,14 +10,15 @@ from collections import Counter, defaultdict
 
 from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer, classify_scene2
-# from audio.CNN_classifier import predict
+from audio.CNN_classifier import predict
 from audio.spectro_analysis import concat_video
 from ocr.final_ocr import ocr
 from ocr.highlights_compare import generate_highlights_compare
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default="CNN", help="CNN, HMM")
-parser.add_argument('--match-path', type=str, default="", help="path to match")
+parser.add_argument('--model', type=str, default='CNN', help="CNN, HMM")
+parser.add_argument('--OCR', type=str, action='store_true')
+parser.add_argument('--match-path', type=str, required=True, help="path to match")
 parser.add_argument('--fifa', action='store_true')
 parser.add_argument('--demo', action='store_true')
 args = parser.parse_args()
@@ -32,13 +33,18 @@ audio = video.audio
 del video
 fpf = int(audio.fps/fps) #frames per frame
 i=-1
-history = [0]
+history = []
 start_indices = [0]
 last = None
 frames = []
 audioframes = []
 scenes_count = 0
 start = time.time()
+
+# Only used with OCR
+start_frame = 0
+end_frame = 0
+scenes = []
 
 winLen = 3
 startScene = 0
@@ -71,10 +77,10 @@ if(os.path.isdir("storage/tmp/tmpMain/")):
         filepath = os.path.join("storage/tmp/tmpMain/", filename)
         os.remove(filepath)
 
-#TODO Add fifa mode
 if args.model == 'CNN' :
     scene_description = 'Unknown' #used for demo
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
+        end_frame = i
         i+=1
         (grabbed, frame) = capture.read()
         if not grabbed:
@@ -103,7 +109,7 @@ if args.model == 'CNN' :
                     exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
                     crowd_condition = False
                 else :
-                    exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.80
+                    exciting_condition = counter['Excited'] > 0
                     crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
                 if not unexciting_condition :
                     if exciting_condition :
@@ -111,15 +117,20 @@ if args.model == 'CNN' :
                             for i, item in enumerate(scene_classes[::-1]):
                                 if item[1] == 'Unexcited':
                                     length = i+3
-                                    frames = frames[int(-length*fps):]
-                                    audioframes = audioframes[int(-length*audio.fps):]
+                                    if args.OCR :
+                                        start_frame = end_frame - length
+                                    else :
+                                        frames = frames[int(-length*fps):]
+                                        audioframes = audioframes[int(-length*audio.fps):]
                                     break
-                        scene = ImageSequenceClip(frames, fps)
-                        scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-                        scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-                        scenes_count+=1
-                        history.append(i)
-                        scene_description= 'Excited'
+                        if args.OCR :
+                            scenes.append((start_frame/fps, end_frame/fps))
+                        else :
+                            scene = ImageSequenceClip(frames, fps)
+                            scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+                            scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+                            scenes_count+=1
+                            scene_description= 'Excited'
                         frames.clear()
                         audioframes.clear()
                     elif not crowd_condition :   
@@ -131,6 +142,7 @@ if args.model == 'CNN' :
                     scene_description= 'Unexcited'
                     frames.clear()
                     audioframes.clear()
+                start_frame = i
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -151,22 +163,26 @@ if args.model == 'CNN' :
         exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
         crowd_condition = False
     else :
-        exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.80
+        exciting_condition = counter['Excited'] > 0
         crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
     if not unexciting_condition :
         if exciting_condition :
             if len(scene_classes) > 8 :
                 for i, item in enumerate(scene_classes[::-1]):
                     if item[1] == 'Unexcited':
-                        length = i+3
-                        frames = frames[int(-length*fps):]
-                        audioframes = audioframes[int(-length*audio.fps):]
+                        if args.OCR :
+                            start_frame = end_frame - length
+                        else :
+                            frames = frames[int(-length*fps):]
+                            audioframes = audioframes[int(-length*audio.fps):]
                         break
-            scene = ImageSequenceClip(frames, fps)
-            scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-            scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-            scenes_count+=1
-            history.append(i)
+            if args.OCR :
+                scenes.append((start_frame/fps, end_frame/fps))
+            else :
+                scene = ImageSequenceClip(frames, fps)
+                scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+                scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+                scenes_count+=1
     frames.clear()
     audioframes.clear()
 
