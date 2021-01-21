@@ -45,7 +45,7 @@ if(os.path.isfile("storage/tmp/classBySecond.txt")):
 
 #TODO Add fifa mode
 if args.model == 'CNN' :
-    scene_class = 'Unkown' #used for demo
+    scene_description = 'Unknown' #used for demo
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
         (grabbed, frame) = capture.read()
@@ -53,7 +53,7 @@ if args.model == 'CNN' :
             break
 
         if args.demo :
-            cv2.imshow(scene_class,frame)
+            cv2.imshow(scene_description,frame)
 
         # Resize frame to width, if specified
         if resizeWidth > 0:
@@ -70,36 +70,37 @@ if args.model == 'CNN' :
                 l = [(i, np.mean(j)) for i,j in d.items()]
                 score = dict(l)
                 counter = Counter(elem[1] for elem in scene_classes[-3:]) #try for 2 - 5 seconds
-                #unique_excited_condition = (len(scene_classes) <= 2 and 'Excited' in dict(counter.most_common(2))) 
-                #unique_crowd_condition = (len(scene_classes) == 1 and 'Crowd' in dict(counter.most_common(1)) and score['Crowd'] > 0.90)
-                #normal_condition = ('Excited' in dict(counter.most_common(1)) and score['Excited'] > 0.90)
                 unexciting_condition = counter['Unexcited'] >= 2
                 if args.fifa :
                     exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
                     crowd_condition = False
                 else :
-                    exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.90
+                    exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.80
                     crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
                 if not unexciting_condition :
                     if exciting_condition :
-                        if args.fifa :
-                            frames = frames[int(-12*fps):]
-                            audioframes = audioframes[int(-12*audio.fps):]
+                        if len(scene_classes) > 8 :
+                            for i, item in enumerate(scene_classes[::-1]):
+                                if item[1] == 'Unexcited':
+                                    length = i+3
+                                    frames = frames[int(-length*fps):]
+                                    audioframes = audioframes[int(-length*audio.fps):]
+                                    break
                         scene = ImageSequenceClip(frames, fps)
                         scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
                         scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
                         scenes_count+=1
                         history.append(i)
-                        scene_class = 'Excited'
+                        scene_description= 'Excited'
                         frames.clear()
                         audioframes.clear()
                     elif not crowd_condition :   
-                        scene_class = 'Unexcited' 
+                        scene_description= 'Unexcited' 
                         frames.clear()
                         audioframes.clear()
-                    scene_class = 'Crowd'
+                    scene_description= 'Crowd'
                 else :
-                    scene_class = 'Unexcited'
+                    scene_description= 'Unexcited'
                     frames.clear()
                     audioframes.clear()
 
@@ -110,18 +111,34 @@ if args.model == 'CNN' :
         frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
 
+    scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
     d = defaultdict(list)
     for k, v in scene_classes:
         d[v].append(k)
     l = [(i, np.mean(j)) for i,j in d.items()]
     score = dict(l)
-    counter = Counter(elem[1] for elem in scene_classes)
-    if('Excited' in dict(counter.most_common(1)) and score['Excited'] > 0.9):
-        scene = ImageSequenceClip(frames, fps)
-        scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-        scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-        scenes_count+=1
-        history.append(i)
+    counter = Counter(elem[1] for elem in scene_classes[-3:]) #try for 2 - 5 seconds
+    unexciting_condition = counter['Unexcited'] >= 2
+    if args.fifa :
+        exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
+        crowd_condition = False
+    else :
+        exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.80
+        crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
+    if not unexciting_condition :
+        if exciting_condition :
+            if len(scene_classes) > 8 :
+                for i, item in enumerate(scene_classes[::-1]):
+                    if item[1] == 'Unexcited':
+                        length = i+3
+                        frames = frames[int(-length*fps):]
+                        audioframes = audioframes[int(-length*audio.fps):]
+                        break
+            scene = ImageSequenceClip(frames, fps)
+            scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+            scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+            scenes_count+=1
+            history.append(i)
     frames.clear()
     audioframes.clear()
 
