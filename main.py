@@ -191,7 +191,7 @@ if args.model == 'CNN' :
 
 elif args.model == 'HMM' :
 
-    sceneNameTimesRes = []
+    sceneFiles = []
 
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
@@ -217,7 +217,6 @@ elif args.model == 'HMM' :
                 
                 # Getting result action for the scene
                 scene_class, classBySec = classify_scene2(sceneAudio, startScene/25, debug=True)
-                sceneNameTimesRes.append(["", scene_class, startScene/25, endScene/25])
 
                 f.write(str(startScene/25) + '-' + str(endScene/25) + ' ' + scene_class + '\n')
                 
@@ -244,15 +243,18 @@ elif args.model == 'HMM' :
                     savedFrames = frames[int(delta*fps) : len(frames)]
                     savedAudioFrames = audioframes[int(delta*audio.fps) : len(audioframes)]
 
+                    # Append scene with actual length to response
+                    sceneFiles.append(["", scene_class, startScene, endScene])
+
                     scene = ImageSequenceClip(savedFrames, fps)
                     scene = scene.set_audio(AudioArrayClip(np.asarray(savedAudioFrames), fps=audio.fps))
                     scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-                    sceneNameTimesRes[len(sceneNameTimesRes)-1][0] = "storage/tmp/scenes/scene{}.mp4".format(scenes_count)
+                    sceneFiles[len(sceneFiles)-1][0] = "storage/tmp/scenes/scene{}.mp4".format(scenes_count)
                     scenes_count+=1
                     history.append(i)
                     start_indices.append(i-len(frames))
 
-                f2.write(str(sceneNameTimesRes[len(sceneNameTimesRes)-1][0]) + ' ' + str(sceneNameTimesRes[len(sceneNameTimesRes)-1][1]) + ' ' + str(sceneNameTimesRes[len(sceneNameTimesRes)-1][2]) + ' ' + str(sceneNameTimesRes[len(sceneNameTimesRes)-1][3]) + '\n')
+                # f2.write(str(sceneFiles[len(sceneFiles)-1][0]) + ' ' + str(sceneFiles[len(sceneFiles)-1][1]) + ' ' + str(sceneFiles[len(sceneFiles)-1][2]) + ' ' + str(sceneFiles[len(sceneFiles)-1][3]) + '\n')
 
                 frames.clear()
                 audioframes.clear()
@@ -276,13 +278,20 @@ elif args.model == 'HMM' :
     audioframes.clear()
 
     # Cut isolated-excited-too-short scenes
-    for index in range(len(sceneNameTimesRes)):
-        if( index > 1 and index < len(sceneNameTimesRes) - 1 and float(sceneNameTimesRes[index][3]) - float(sceneNameTimesRes[index][2]) <5 and 
-        sceneNameTimesRes[index][1] == "SaveTheEnd" and sceneNameTimesRes[index-1][1] == "Pass" and sceneNameTimesRes[index+1][1] == "Pass"):
+    for index in range(len(sceneFiles)):
+        if( index > 1 and index < len(sceneFiles) - 1 and float(sceneFiles[index][3]) - float(sceneFiles[index][2]) <5 and 
+        sceneFiles[index][1] == "SaveTheEnd" and sceneFiles[index-1][1] == "Pass" and sceneFiles[index+1][1] == "Pass"):
             
-            f1.write( str(sceneNameTimesRes[index][0]) + " " + str(sceneNameTimesRes[index][1]) + " " +  str(sceneNameTimesRes[index][2]) + " " + str(sceneNameTimesRes[index][3]) + '\n')
-            if(os.path.isfile(sceneNameTimesRes[index][0])):
-                os.remove(sceneNameTimesRes[index][0])
+            f1.write( str(sceneFiles[index][0]) + " " + str(sceneFiles[index][1]) + " " +  str(sceneFiles[index][2]) + " " + str(sceneFiles[index][3]) + '\n')
+            if(os.path.isfile(sceneFiles[index][0])):
+                os.remove(sceneFiles[index][0])
+        elif(sceneFiles[index][1] == "SaveTheEnd"): #Append to the result array only important scene indices
+            scenes.append( [sceneFiles[index][2]/fps, sceneFiles[index][3]/fps] )
+    
+    for scene in scenes:
+        f2.write(str(scene[0]) + ' ' + str(scene[1]) + '\n')
+
+
 
 capture.release()
 cv2.destroyAllWindows()
