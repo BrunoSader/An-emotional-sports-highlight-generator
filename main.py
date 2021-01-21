@@ -224,36 +224,25 @@ elif args.model == 'HMM' :
                 # Append only interesting scenes
                 if(scene_class == "SaveTheEnd"):
                     
-                    # savedFrames = []
-                    # savedAudioFrames = []
+                    savedFrames = []
+                    savedAudioFrames = []
 
-                    # # Get the time segment above the whole second of the end of scene
-                    # delta = endScene - math.trunc(endScene/25)
-                    # for index in range(delta):
-                    #     savedFrames.append( frames.pop() )
+                    # Backward iteration to find nb of excited at the end
+                    count = 0
+                    for sec in reversed(classBySec):
+                        if(sec[1] == "ExcitedCommentary"):
+                            count += 1
+                        else:
+                            break
                     
-                    # audioFramesList = np.asarray(audioframes)
-                    # delta = (endScene - math.trunc(endScene/25))/25 * audio.fps
-                    # for index in range(delta):
-                    #     savedAudioFrames.append( audioFramesList.pop() )
+                    if(len(classBySec) > count + 3):
+                        count += 3
+                    elif(len(classBySec) > count):
+                        count += len(classBySec) - count
+                    delta = len(classBySec) - count
 
-                    # # Calculate number of frames and audio frames to save
-                    # count = 0
-                    # for sec in reversed(range(len(classBySec))):
-                    #     if(sec[1] == "ExcitedCommentary"):
-                    #         count += 1
-                    #     else:
-                    #         break
-                    
-                    # # Get the frames of the wholes seconds from the scene
-                    # for index in range(count*25):
-                    #     savedFrames.append( frames.pop() )
-                    
-                    # for index in range(count*audio.fps):
-                    #     savedAudioFrames.append( audioFramesList.pop() )
-
-                    savedFrames = frames
-                    savedAudioFrames = audioframes
+                    savedFrames = frames[int(delta*fps) : len(frames)]
+                    savedAudioFrames = audioframes[int(delta*audio.fps) : len(audioframes)]
 
                     scene = ImageSequenceClip(savedFrames, fps)
                     scene = scene.set_audio(AudioArrayClip(np.asarray(savedAudioFrames), fps=audio.fps))
@@ -289,7 +278,7 @@ elif args.model == 'HMM' :
     # Cut isolated-excited-too-short scenes
     for index in range(len(sceneNameTimesRes)):
         if( index > 1 and index < len(sceneNameTimesRes) - 1 and float(sceneNameTimesRes[index][3]) - float(sceneNameTimesRes[index][2]) <5 and 
-        sceneNameTimesRes[index][1] == "Save" and sceneNameTimesRes[index-1][1] == "Pass" and sceneNameTimesRes[index+1][1] == "Pass"):
+        sceneNameTimesRes[index][1] == "SaveTheEnd" and sceneNameTimesRes[index-1][1] == "Pass" and sceneNameTimesRes[index+1][1] == "Pass"):
             
             f1.write( str(sceneNameTimesRes[index][0]) + " " + str(sceneNameTimesRes[index][1]) + " " +  str(sceneNameTimesRes[index][2]) + " " + str(sceneNameTimesRes[index][3]) + '\n')
             if(os.path.isfile(sceneNameTimesRes[index][0])):
