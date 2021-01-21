@@ -611,11 +611,11 @@ if __name__ =='__main__' :
 
     #  ---------- Test environment 3
 
-    # Create hmm model
-    hmm_models = getHmmModel('storage/tmp/AudioClasses1SecCuratedExcited/')
+    # # Create hmm model
+    # hmm_models = getHmmModel('storage/tmp/AudioClasses1SecCuratedExcited/')
 
-    # Write hmm model to pickle
-    with open("audio/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
+    # # Write hmm model to pickle
+    # with open("audio/HmmModels.pkl", "wb") as file: pickle.dump(hmm_models, file)
 
     # # Get hmm model from pickle file
     # with open("audio/HmmModels.pkl", "rb") as file: hmm_models = pickle.load(file)
@@ -647,3 +647,69 @@ if __name__ =='__main__' :
     # finalVideo.write_videofile("storage/tmp/highlights.mp4")
 
     #  ---------- End test environment 3
+
+    #  ---------- Test environment 4
+
+    # Put together all scenes and sort them by the endScene
+
+    # scenes = [ [2, 3], [7, 9], [13, 14], [20, 21], [28, 30]]
+    # OCR_scenes = [ [1, 4], [8, 10], [15, 16], [24, 25] ]
+
+    # allScenes = []
+    # for scene in scenes:
+    #     allScenes.append([scene[0], scene[1], "audio"])
+    # for scene in OCR_scenes:
+    #     allScenes.append([scene[0], scene[1], "ocr"])
+
+    # sortedScenes = sorted(allScenes, key=lambda scene: scene[1])
+
+    # # Algorithm for choosing the right scenes
+    # near = 1
+    # use = True
+    # final_scenes = []
+    # for i, scene in enumerate(sortedScenes):
+    #     if(use == True):
+    #         if(scene[2] == "audio" and i < len(sortedScenes) - 1 and sortedScenes[i+1][2] == "ocr"):
+    #             if(sortedScenes[i+1][0] < scene[0]):
+    #                 final_scenes.append(sortedScenes[i+1])
+    #             elif( sortedScenes[i+1][0] > scene[0] and sortedScenes[i+1][0] <= scene[1] + near):
+    #                 final_scenes.append(sortedScenes[i+1])
+    #             else:
+    #                 final_scenes.append(scene)
+
+    #         elif(scene[2] == "audio" and i == len(sortedScenes) - 1 and (sortedScenes[i-1][2] == "audio" or sortedScenes[i-1][1] < scene[0] - near)):
+    #             final_scenes.append(scene)
+            
+    #         elif(scene[2] == "audio"):
+    #             final_scenes.append(scene)
+
+    #         elif(scene[2] == "ocr" and i < len(sortedScenes) - 1):
+    #             if(sortedScenes[i+1][0] < scene[0]):
+    #                 final_scenes.append(scene)
+    #                 use = False
+    #             elif( sortedScenes[i+1][0] > scene[0] and sortedScenes[i+1][0] <= scene[1] + near):
+    #                 final_scenes.append(sortedScenes[i+1])
+    #             else:
+    #                 final_scenes.append(scene)
+
+    #         elif(scene[2] == "ocr" and i == len(sortedScenes) - 1 and (sortedScenes[i-1][2] == "ocr" or sortedScenes[i-1][1] < scene[0] - near)):
+    #             final_scenes.append(scene)
+            
+    #         elif(scene[2] == "ocr"):
+    #             final_scenes.append(scene)
+
+    #     else:
+    #         use = True
+
+    # # Delete double cells
+    # filteredScenes = []
+    # for scene in final_scenes:
+    #     if(len(filteredScenes) == 0 ):
+    #         filteredScenes.append(scene)
+    #     elif(len(filteredScenes) > 0 and filteredScenes[len(filteredScenes) - 1] != scene):
+    #         filteredScenes.append(scene)
+        
+    # print(filteredScenes)
+
+    #  ---------- End test environment 4
+    
