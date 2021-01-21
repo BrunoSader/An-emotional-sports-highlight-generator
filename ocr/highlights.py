@@ -19,7 +19,7 @@ def highlights(list):
             values_next = list[i+1].split(',')
             
         if((int(values_next[1])-int(values_i[1]) > generate_highlights.highlight_length) and (values_i[0][3]!= '6')):
-            highlights.append(values_i[1])
+            highlights.append(values_i[1]-10, values_i[1]+10)
         
     return highlights
 
