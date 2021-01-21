@@ -272,9 +272,9 @@ end = time.time()
 
 print("Elapsed time is  {}".format(end-start))
 
-# files = glob.glob('storage/tmp/scenes/*')
-# for f in files:
-#     os.remove(f)
+files = glob.glob('storage/tmp/scenes/*')
+for f in files:
+    os.remove(f)
 
 capture.release()
 cv2.destroyAllWindows()
