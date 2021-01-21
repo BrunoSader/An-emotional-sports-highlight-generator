@@ -4,6 +4,7 @@ import os
 from random import randint
 import numpy as np
 import sys
+import math
 
 import cv2
 from moviepy.editor import *
@@ -118,6 +119,18 @@ def get_folder_content(storage_client, blobName, bucketName, savePath='storage/t
         get_video(storage_client, file, bucketName, fullFilePath)
 
 
+# Extract 1 second sequences from audio in a directory 
+def extractAllSeconds(inputFolder, outputFolder):
+
+    for filename in os.listdir(inputFolder):
+        filePath = os.path.join(inputFolder, filename)
+        audio = AudioFileClip(filePath)
+
+        for index in range(math.trunc(audio.duration)):
+            if(index + 1 < audio.duration):
+                clip = audio.subclip(index, index + 1)
+                clip.write_audiofile(outputFolder + filename[0:-4] + '-' + str(index) + '.wav', audio.fps)
+
 if __name__=='__main__' :
 
     client = connect_db()
@@ -127,13 +140,15 @@ if __name__=='__main__' :
     # filesList = list_files(client, bucketName='football_matches')
     # print(filesList)
 
-    # upload_folder_content(client, blobName='classification/v5/TrainHmmNormal/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses/')
+    upload_folder_content(client, blobName='classification/v5/Train1Sec/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses1SecCuratedExcited/')
 
     # get_folder_content(client, blobName='classification/v3/AudioClasses/UnexcitedCommentary', bucketName='football_matches', savePath='storage/tmp/AudioClassesUnex/')
 
     # get_video(client, blobName='france_ligue-1/2016-2017/2017-02-10 - 22-45 Bordeaux 0 - 3 Paris SG/2.mkv', bucketName='football_matches', savePath='storage/tmp/matchBordeauxPSG2.mkv')
 
-    # video_to_audio(video_path='storage/tmp/matchPSGMetz.mkv', audio_path='storage/tmp/audio.wav', delete_video=False)
+    # video_to_audio(video_path='storage/tmp/matchBordeauxPSG2.mkv', audio_path='storage/tmp/audioBordeauxPSG2.wav', delete_video=False)
+
+    # extractAllSeconds('storage/tmp/AudioClasses/UnexcitedCommentary/', 'storage/tmp/AudioClasses1Sec/UnexcitedCommentary/')
 
     
     
