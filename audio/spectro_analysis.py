@@ -5,6 +5,7 @@ from moviepy.editor import VideoFileClip, concatenate_videoclips
 import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans, vq
 import numpy as np
+import os
 
 def trim_video(video, indices, min_time, divider=40):
     video_index = 0
@@ -22,7 +23,8 @@ def trim_video(video, indices, min_time, divider=40):
 def concat_video(video_index, video_path='storage/trim/video', save_path = 'storage/tmp/highlights.mp4'):
     videos=[]
     for i in range(video_index):
-        videos.append(VideoFileClip(video_path+str(i)+'.mp4'))
+        if(os.path.isfile(video_path+str(i)+'.mp4')):
+            videos.append(VideoFileClip(video_path+str(i)+'.mp4'))
     
     final_video = concatenate_videoclips(videos)
     final_video.write_videofile(save_path)

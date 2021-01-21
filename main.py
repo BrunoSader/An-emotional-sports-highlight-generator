@@ -9,7 +9,7 @@ import glob
 from collections import Counter, defaultdict
 
 from video.scene_detection import detect_scene
-from audio.classification import classify_scene, HMMTrainer
+from audio.classification import classify_scene, HMMTrainer, classify_scene2
 # from audio.CNN_classifier import predict
 from audio.spectro_analysis import concat_video
 from ocr.final_ocr import ocr
@@ -54,7 +54,15 @@ if(os.path.isfile("storage/tmp/classBySecond.txt")):
 if(os.path.isfile("storage/tmp/classByScene.txt")):
     os.remove("storage/tmp/classByScene.txt")
 
+if(os.path.isfile("storage/tmp/deletedScenes.txt")):
+    os.remove("storage/tmp/deletedScenes.txt")
+
+if(os.path.isfile("storage/tmp/acceptedScenes.txt")):
+    os.remove("storage/tmp/acceptedScenes.txt")
+
 f= open("storage/tmp/classByScene.txt","a")
+f1= open("storage/tmp/deletedScenes.txt","a")
+f2= open("storage/tmp/acceptedScenes.txt","a")
 
 if(os.path.isdir("storage/tmp/tmpMain/")):
     for filename in os.listdir("storage/tmp/tmpMain/"):
@@ -62,64 +70,64 @@ if(os.path.isdir("storage/tmp/tmpMain/")):
         os.remove(filepath)
 
 if args.model == 'CNN' :
-    # Test code
-    print("test")
+    for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
+        i+=1
+        (grabbed, frame) = capture.read()
+        if not grabbed:
+            break
 
-    # for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
-    #     i+=1
-    #     (grabbed, frame) = capture.read()
-    #     if not grabbed:
-    #         break
+        # Resize frame to width, if specified
+        if resizeWidth > 0:
+            (height, width) = frame.shape[:2]
+            resizeHeight = int(float(resizeWidth / width) * height)
+            frame = cv2.resize(frame, (resizeWidth, resizeHeight),
+                interpolation=cv2.INTER_AREA)
+        if i > 0 :
+            if(detect_scene(frame, last)) :
+                scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+                d = defaultdict(list)
+                for k, v in scene_classes:
+                    d[v].append(k)
+                l = [(i, np.mean(j)) for i,j in d.items()]
+                score = dict(l)
+                counter = Counter(elem[1] for elem in scene_classes[-5:])
+                if(('Excited' in dict(counter.most_common(1)) or ('Excited' in dict(counter.most_common(2)) and 'Crowd' in dict(counter.most_common(2)))) and score['Excited'] > 0.85):
+                    scene = ImageSequenceClip(frames, fps)
+                    scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+                    scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+                    scenes_count+=1
+                    history.append(i)
+                    start_indices.append(i-len(frames))
+                frames.clear()
+                audioframes.clear()
 
-    #     # Resize frame to width, if specified
-    #     if resizeWidth > 0:
-    #         (height, width) = frame.shape[:2]
-    #         resizeHeight = int(float(resizeWidth / width) * height)
-    #         frame = cv2.resize(frame, (resizeWidth, resizeHeight),
-    #             interpolation=cv2.INTER_AREA)
-    #     if i > 0 :
-    #         if(detect_scene(frame, last)) :
-    #             scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-    #             d = defaultdict(list)
-    #             for k, v in scene_classes:
-    #                 d[v].append(k)
-    #             l = [(i, np.mean(j)) for i,j in d.items()]
-    #             score = dict(l)
-    #             counter = Counter(elem[1] for elem in scene_classes[-5:])
-    #             if(('Excited' in dict(counter.most_common(1)) or ('Excited' in dict(counter.most_common(2)) and 'Crowd' in dict(counter.most_common(2)))) and score['Excited'] > 0.85):
-    #                 scene = ImageSequenceClip(frames, fps)
-    #                 scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-    #                 scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-    #                 scenes_count+=1
-    #                 history.append(i)
-    #                 start_indices.append(i-len(frames))
-    #             frames.clear()
-    #             audioframes.clear()
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-    #     if cv2.waitKey(1) & 0xFF == ord('q'):
-    #         break
+        audioframes.extend(chunk)
+        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        last = frame
 
-    #     audioframes.extend(chunk)
-    #     frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-    #     last = frame
-
-    # d = defaultdict(list)
-    # for k, v in scene_classes:
-    #     d[v].append(k)
-    # l = [(i, np.mean(j)) for i,j in d.items()]
-    # score = dict(l)
-    # counter = Counter(elem[1] for elem in scene_classes)
-    # if('Excited' in dict(counter.most_common(1)) and score['Excited'] > 0.9):
-    #     scene = ImageSequenceClip(frames, fps)
-    #     scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
-    #     scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
-    #     scenes_count+=1
-    #     history.append(i)
-    #     start_indices.append(i-len(frames))
-    # frames.clear()
-    # audioframes.clear()
+    d = defaultdict(list)
+    for k, v in scene_classes:
+        d[v].append(k)
+    l = [(i, np.mean(j)) for i,j in d.items()]
+    score = dict(l)
+    counter = Counter(elem[1] for elem in scene_classes)
+    if('Excited' in dict(counter.most_common(1)) and score['Excited'] > 0.9):
+        scene = ImageSequenceClip(frames, fps)
+        scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+        scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+        scenes_count+=1
+        history.append(i)
+        start_indices.append(i-len(frames))
+    frames.clear()
+    audioframes.clear()
 
 elif args.model == 'HMM' :
+
+    sceneNameTimesRes = []
+
     for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
         i+=1
         endScene = i
@@ -140,20 +148,57 @@ elif args.model == 'HMM' :
                 # Write audio & read with audioclip
                 clip = AudioArrayClip(np.asarray(audioframes), fps=audio.fps)
                 clip.write_audiofile('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav', audio.fps)
-                scene = AudioFileClip('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav')
-                scene_class = classify_scene(scene, winLen, debug=True)
+                sceneAudio = AudioFileClip('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav')
+                
+                # Getting result action for the scene
+                scene_class, classBySec = classify_scene2(sceneAudio, startScene/25, debug=True)
+                sceneNameTimesRes.append(["", scene_class, startScene/25, endScene/25])
+
                 f.write(str(startScene/25) + '-' + str(endScene/25) + ' ' + scene_class + '\n')
                 
-
-                # scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), winLen, debug=True)
                 # Append only interesting scenes
-                if(scene_class == "ExcitedCommentary"):
-                    scene = ImageSequenceClip(frames, fps)
-                    scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
+                if(scene_class == "SaveTheEnd"):
+                    
+                    # savedFrames = []
+                    # savedAudioFrames = []
+
+                    # # Get the time segment above the whole second of the end of scene
+                    # delta = endScene - math.trunc(endScene/25)
+                    # for index in range(delta):
+                    #     savedFrames.append( frames.pop() )
+                    
+                    # audioFramesList = np.asarray(audioframes)
+                    # delta = (endScene - math.trunc(endScene/25))/25 * audio.fps
+                    # for index in range(delta):
+                    #     savedAudioFrames.append( audioFramesList.pop() )
+
+                    # # Calculate number of frames and audio frames to save
+                    # count = 0
+                    # for sec in reversed(range(len(classBySec))):
+                    #     if(sec[1] == "ExcitedCommentary"):
+                    #         count += 1
+                    #     else:
+                    #         break
+                    
+                    # # Get the frames of the wholes seconds from the scene
+                    # for index in range(count*25):
+                    #     savedFrames.append( frames.pop() )
+                    
+                    # for index in range(count*audio.fps):
+                    #     savedAudioFrames.append( audioFramesList.pop() )
+
+                    savedFrames = frames
+                    savedAudioFrames = audioframes
+
+                    scene = ImageSequenceClip(savedFrames, fps)
+                    scene = scene.set_audio(AudioArrayClip(np.asarray(savedAudioFrames), fps=audio.fps))
                     scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
+                    sceneNameTimesRes[len(sceneNameTimesRes)-1][0] = "storage/tmp/scenes/scene{}.mp4".format(scenes_count)
                     scenes_count+=1
                     history.append(i)
                     start_indices.append(i-len(frames))
+
+                f2.write(str(sceneNameTimesRes[len(sceneNameTimesRes)-1][0]) + ' ' + str(sceneNameTimesRes[len(sceneNameTimesRes)-1][1]) + ' ' + str(sceneNameTimesRes[len(sceneNameTimesRes)-1][2]) + ' ' + str(sceneNameTimesRes[len(sceneNameTimesRes)-1][3]) + '\n')
 
                 frames.clear()
                 audioframes.clear()
@@ -165,8 +210,8 @@ elif args.model == 'HMM' :
         frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         last = frame
         
-    scene_class = classify_scene(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), winLen, False)
-    if(scene_class == "Crowd" or scene_class == "ExcitedCommentary"):
+    scene_class, classBySec = classify_scene2(AudioArrayClip(np.asarray(audioframes), fps=audio.fps), False)
+    if(scene_class == "SaveTheEnd"):
         scene = ImageSequenceClip(frames, fps)
         scene = scene.set_audio(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
         scene.write_videofile("storage/tmp/scenes/scene{}.mp4".format(scenes_count))
@@ -175,6 +220,16 @@ elif args.model == 'HMM' :
 
     frames.clear()
     audioframes.clear()
+
+    # Cut isolated-excited-too-short scenes
+    for index in range(len(sceneNameTimesRes)):
+        if( index > 1 and index < len(sceneNameTimesRes) - 1 and float(sceneNameTimesRes[index][3]) - float(sceneNameTimesRes[index][2]) <5 and 
+        sceneNameTimesRes[index][1] == "Save" and sceneNameTimesRes[index-1][1] == "Pass" and sceneNameTimesRes[index+1][1] == "Pass"):
+            
+            f1.write( str(sceneNameTimesRes[index][0]) + " " + str(sceneNameTimesRes[index][1]) + " " +  str(sceneNameTimesRes[index][2]) + " " + str(sceneNameTimesRes[index][3]) + '\n')
+            if(os.path.isfile(sceneNameTimesRes[index][0])):
+                os.remove(sceneNameTimesRes[index][0])
+
 
 concat_video(scenes_count, video_path='storage/tmp/scenes/scene', save_path='highlights.mp4')
 
