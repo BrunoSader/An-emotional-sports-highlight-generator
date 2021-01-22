@@ -283,15 +283,35 @@ elif args.model == 'HMM' :
     audioframes.clear()
 
     # Cut isolated-excited-too-short scenes
+    excitedSegments = []
     for index in range(len(sceneFiles)):
-        if( index > 1 and index < len(sceneFiles) - 1 and float(sceneFiles[index][3]) - float(sceneFiles[index][2]) <5 and 
-        sceneFiles[index][1] == "SaveTheEnd" and sceneFiles[index-1][1] == "Pass" and sceneFiles[index+1][1] == "Pass"):
+        # if( index > 1 and index < len(sceneFiles) - 1 and float(sceneFiles[index][3]) - float(sceneFiles[index][2]) <5 and 
+        # sceneFiles[index][1] == "SaveTheEnd" and sceneFiles[index-1][1] == "Pass" and sceneFiles[index+1][1] == "Pass"):
             
-            f1.write( str(sceneFiles[index][0]) + " " + str(sceneFiles[index][1]) + " " +  str(sceneFiles[index][2]) + " " + str(sceneFiles[index][3]) + '\n')
-            if(os.path.isfile(sceneFiles[index][0])):
-                os.remove(sceneFiles[index][0])
-        elif(sceneFiles[index][1] == "SaveTheEnd"): #Append to the result array only important scene indices
-            scenes.append( [sceneFiles[index][2]/fps, sceneFiles[index][3]/fps] )
+        #     f1.write( str(sceneFiles[index][0]) + " " + str(sceneFiles[index][1]) + " " +  str(sceneFiles[index][2]) + " " + str(sceneFiles[index][3]) + '\n')
+        #     if(os.path.isfile(sceneFiles[index][0])):
+        #         os.remove(sceneFiles[index][0])
+        # elif(sceneFiles[index][1] == "SaveTheEnd"): #Append to the result array only important scene indices
+        #     scenes.append( [sceneFiles[index][2]/fps, sceneFiles[index][3]/fps] )
+
+        if( sceneFiles[index][1] == "SaveTheEnd" ):
+            excitedSegments.append(sceneFiles[index])
+
+        elif(sceneFiles[index][1] == "Pass"):
+            if(len(excitedSegments) > 0 and  int(excitedSegments[len(excitedSegments) - 1][3]) - int(excitedSegments[0][2]) < 5 ):
+                for scene in excitedSegments:
+                    f1.write( str(scene[0]) + " " + str(scene[1]) + " " +  str(scene[2]) + " " + str(scene[3]) + '\n')
+                    if(os.path.isfile(scene[0])):
+                        os.remove(scene[0])
+                excitedSegments.clear()
+
+            elif( len(excitedSegments) > 0):
+                for scene in excitedSegments:
+                    scenes.append([scene[2]/fps, scene[3]]/fps)
+                excitedSegments.clear()
+
+        if( sceneFiles[index][1] == "SaveTheEnd" ):
+            excitedSegments.append(sceneFiles[index])
     
     for scene in scenes:
         f2.write(str(scene[0]) + ' ' + str(scene[1]) + '\n')

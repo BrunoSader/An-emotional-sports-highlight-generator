@@ -483,7 +483,7 @@ def classify_scene2(audio, startTime=0, debug=False):
     return "Pass", classBySec
 
 
-#if __name__ =='__main__' :
+if __name__ =='__main__' :
     
     # Create hmm model
     # hmm_models = getHmmModel('storage/tmp/AudioClasses/')
@@ -712,4 +712,32 @@ def classify_scene2(audio, startTime=0, debug=False):
     # print(filteredScenes)
 
     #  ---------- End test environment 4
+
+    #  ------------ Test environment 5
+
+    sceneFiles = [ ["a", "Pass", 1, 2], ["b", "SaveTheEnd", 2, 4], ["c", "Pass", 4, 5], ["d", "SaveTheEnd", 5, 7], ["e", "SaveTheEnd", 7, 11], ["f", "Pass", 11, 19]]
+    scenes = []
+    excitedSegments = []
+    fps = 5
+    for index in range(len(sceneFiles)):
+        if( sceneFiles[index][1] == "SaveTheEnd" ):
+            excitedSegments.append(sceneFiles[index])
+
+        elif(sceneFiles[index][1] == "Pass"):
+            if(len(excitedSegments) > 0 and  int(excitedSegments[len(excitedSegments) - 1][3]) - int(excitedSegments[0][2]) < 5 ):
+                for scene in excitedSegments:
+                    print( str(scene[0]) + " " + str(scene[1]) + " " +  str(scene[2]) + " " + str(scene[3]) + '\n')
+                    # if(os.path.isfile(scene[0])):
+                    #     os.remove(scene[0])
+                excitedSegments.clear()
+
+            elif( len(excitedSegments) > 0):
+                for scene in excitedSegments:
+                    scenes.append([scene[2], scene[3]])
+                excitedSegments.clear()
+    
+    print(scenes)
+    print("end")
+    
+    # -------------- End test environment 5
     
