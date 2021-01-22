@@ -383,7 +383,7 @@ else :
                 elif(scene[2] == "audio"):
                     final_scenes.append(scene)
 
-                elif(scene[2] == "ocr" and i < len(sortedScenes) - 1):
+                elif(scene[2] == "ocr" and i < len(sortedScenes) - 1 and sortedScenes[i+1][2] == "audio"):
                     if(sortedScenes[i+1][0] < scene[0]):
                         final_scenes.append(scene)
                         use = False
