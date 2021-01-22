@@ -117,7 +117,7 @@ if args.model == 'CNN' :
                     exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
                     crowd_condition = False
                 else :
-                    exciting_condition = counter['Excited'] > 0
+                    exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.90
                     crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
                 if not unexciting_condition :
                     if exciting_condition :
@@ -173,7 +173,7 @@ if args.model == 'CNN' :
         exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
         crowd_condition = False
     else :
-        exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.90
+        exciting_condition = counter['Excited'] > 0
         crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
     if not unexciting_condition :
         if exciting_condition :
