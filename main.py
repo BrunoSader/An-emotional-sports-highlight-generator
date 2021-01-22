@@ -301,7 +301,6 @@ if not args.OCR :
     for f in files:
         os.remove(f)
     concat_video(scenes_count, video_path='storage/tmp/scenes/scene', save_path='highlights.mp4')
-
 else :
 
     if args.algo == "1":
