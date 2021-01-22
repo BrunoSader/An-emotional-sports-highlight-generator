@@ -10,7 +10,7 @@ def readFile(filename):
     return list
     
     
-def highlights(list):
+def highlights(list, highlight_length):
     highlights = []
     
     for i in range(len(list)-1):
@@ -18,8 +18,8 @@ def highlights(list):
             values_i = list[i].split(',')
             values_next = list[i+1].split(',')
             
-        if((int(values_next[1])-int(values_i[1]) > generate_highlights.highlight_length) and (values_i[0][3]!= '6')):
-            highlights.append(values_i[1]-10, values_i[1]+10)
+        if((int(values_next[1])-int(values_i[1]) > highlight_length) and (values_i[0][3]!= '6')):
+            highlights.append((int(values_i[1])-10, int(values_i[1])+10))
         
     return highlights
 

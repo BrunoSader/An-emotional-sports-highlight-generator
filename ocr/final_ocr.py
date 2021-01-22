@@ -16,13 +16,13 @@ import threading
 
 # Dimensioning values
 # We are defining global variables based on match data in order to isolate the scoreboard
-left_x = 35
-upper_y = 15
-right_x = 160
-lower_y = 25
+left_x = 255
+upper_y = 80
+right_x = 750
+lower_y = 125
 
-time_divide = 70
-time_width = 35
+time_divide = 345
+time_width = 90
 time_position = 'left'
 # If time-position = right : scoreboard is on the left and time on the right
 # Else if time position = left : scoreboard is on the right and time on the left

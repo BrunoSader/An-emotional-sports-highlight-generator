@@ -483,7 +483,7 @@ def classify_scene2(audio, startTime=0, debug=False):
     return "Pass", classBySec
 
 
-if __name__ =='__main__' :
+#if __name__ =='__main__' :
     
     # Create hmm model
     # hmm_models = getHmmModel('storage/tmp/AudioClasses/')
