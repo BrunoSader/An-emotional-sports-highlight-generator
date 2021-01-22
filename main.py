@@ -39,6 +39,10 @@ last = None
 frames = []
 audioframes = []
 scenes_count = 0
+threshold = 0.90
+if args.fifa :
+    threshold = 0.95
+
 
 # Only used with OCR
 start_frame = 0
@@ -100,7 +104,7 @@ if args.model == 'CNN' :
             frame = cv2.resize(frame, (resizeWidth, resizeHeight),
                 interpolation=cv2.INTER_AREA)
         if i > 0 :
-            if(detect_scene(frame, last)) :
+            if(detect_scene(frame, last, threshold)) :
                 scene_classes = predict(AudioArrayClip(np.asarray(audioframes), fps=audio.fps))
                 d = defaultdict(list)
                 for k, v in scene_classes:
@@ -213,7 +217,7 @@ elif args.model == 'HMM' :
             frame = cv2.resize(frame, (resizeWidth, resizeHeight),
                 interpolation=cv2.INTER_AREA)
         if i > 0 :
-            if(detect_scene(frame, last)) :
+            if(detect_scene(frame, last, threshold)) :
                 
                 # Write audio & read with audioclip
                 clip = AudioArrayClip(np.asarray(audioframes), fps=audio.fps)
