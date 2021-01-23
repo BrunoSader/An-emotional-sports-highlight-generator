@@ -1,5 +1,5 @@
 ### For training testing and development of the classifier please check :
-### speech-classification-using-cnn.ipynb
+### 1d_cnn_classification.ipynb
 
 import numpy as np
 import librosa

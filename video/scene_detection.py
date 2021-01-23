@@ -7,10 +7,10 @@ import cv2
 #from keras.preprocessing import image
 from video.preprocessing import create_histogram
 
-def detect_scene(new_frame, last_frame) :
+def detect_scene(new_frame, last_frame, threshold=0.9) :
     new_histogram = create_histogram(new_frame)
     last_histogram = create_histogram(last_frame)
-    if cv2.compareHist(new_histogram, last_histogram, cv2.HISTCMP_CORREL) < 0.95 :
+    if cv2.compareHist(new_histogram, last_histogram, cv2.HISTCMP_CORREL) < threshold :
         return True
     return False
 
