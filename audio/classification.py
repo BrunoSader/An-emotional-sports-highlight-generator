@@ -475,10 +475,13 @@ def classify_scene2(audio, startTime=0, debug=False):
     # elif(len(classBySec) > 1 and classBySec[len(classBySec) - 1][1] == "ExcitedCommentary" and classBySec[len(classBySec) - 2][1] == "ExcitedCommentary"):
     #     return "Save"
 
-    if(len(classBySec) == 1 and classBySec[len(classBySec) - 1][1] == "ExcitedCommentary"):
+    if(len(classBySec) > 0 and classBySec[len(classBySec) - 1][1] == "ExcitedCommentary"):
         return "SaveTheEnd", classBySec
-    elif(len(classBySec) > 1 and classBySec[len(classBySec) - 1][1] == "ExcitedCommentary" and classBySec[len(classBySec) - 2][1] == "ExcitedCommentary"):
-        return "SaveTheEnd", classBySec
+
+    # if(len(classBySec) == 1 and classBySec[len(classBySec) - 1][1] == "ExcitedCommentary"):
+    #     return "SaveTheEnd", classBySec
+    # elif(len(classBySec) > 1 and classBySec[len(classBySec) - 1][1] == "ExcitedCommentary" and classBySec[len(classBySec) - 2][1] == "ExcitedCommentary"):
+    #     return "SaveTheEnd", classBySec
     
     return "Pass", classBySec
 

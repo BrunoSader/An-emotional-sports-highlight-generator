@@ -14,6 +14,7 @@ from audio.CNN_classifier import predict
 from audio.spectro_analysis import concat_video
 from ocr.final_ocr import ocr
 from ocr.highlights import readFile, highlights
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='CNN', help="CNN, HMM")
@@ -76,9 +77,13 @@ if(os.path.isfile("storage/tmp/deletedScenes.txt")):
 if(os.path.isfile("storage/tmp/acceptedScenes.txt")):
     os.remove("storage/tmp/acceptedScenes.txt")
 
+if(os.path.isfile("storage/tmp/allScenes.txt")):
+    os.remove("storage/tmp/allScenes.txt")
+
 f= open("storage/tmp/classByScene.txt","a")
 f1= open("storage/tmp/deletedScenes.txt","a")
 f2= open("storage/tmp/acceptedScenes.txt","a")
+f3= open("storage/tmp/allScenes.txt","a")
 
 if(os.path.isdir("storage/tmp/tmpMain/")):
     for filename in os.listdir("storage/tmp/tmpMain/"):
@@ -227,6 +232,7 @@ elif args.model == 'HMM' :
                 
                 # Getting result action for the scene
                 scene_class, classBySec = classify_scene2(sceneAudio, startScene/25, debug=True)
+                sceneFiles.append(["", scene_class, startScene/fps, endScene/fps])
 
                 f.write(str(startScene/25) + '-' + str(endScene/25) + ' ' + scene_class + '\n')
                 
@@ -245,7 +251,7 @@ elif args.model == 'HMM' :
                             break
                     
                     if(len(classBySec) > count + 3):
-                        count += 3
+                        count += 4
                     elif(len(classBySec) > count):
                         count += len(classBySec) - count
                     delta = len(classBySec) - count
@@ -254,7 +260,6 @@ elif args.model == 'HMM' :
                     savedAudioFrames = audioframes[int(delta*audio.fps) : len(audioframes)]
 
                     # Append scene with actual length to response
-                    sceneFiles.append(["", scene_class, startScene, endScene])
                     if not args.OCR :
                         scene = ImageSequenceClip(savedFrames, fps)
                         scene = scene.set_audio(AudioArrayClip(np.asarray(savedAudioFrames), fps=audio.fps))
@@ -263,8 +268,8 @@ elif args.model == 'HMM' :
                     scenes_count+=1
                     history.append(i)
                     start_indices.append(i-len(frames))
-
-                # f2.write(str(sceneFiles[len(sceneFiles)-1][0]) + ' ' + str(sceneFiles[len(sceneFiles)-1][1]) + ' ' + str(sceneFiles[len(sceneFiles)-1][2]) + ' ' + str(sceneFiles[len(sceneFiles)-1][3]) + '\n')
+                
+                f3.write(str(sceneFiles[len(sceneFiles)-1][0]) + ' ' + str(sceneFiles[len(sceneFiles)-1][1]) + ' ' + str(sceneFiles[len(sceneFiles)-1][2]) + ' ' + str(sceneFiles[len(sceneFiles)-1][3]) + '\n')
 
                 frames.clear()
                 audioframes.clear()
@@ -303,23 +308,49 @@ elif args.model == 'HMM' :
             excitedSegments.append(sceneFiles[index])
 
         elif(sceneFiles[index][1] == "Pass"):
-            if(len(excitedSegments) > 0 and  int(excitedSegments[len(excitedSegments) - 1][3]) - int(excitedSegments[0][2]) < 5 ):
+            if(len(excitedSegments) > 0 and  float(excitedSegments[len(excitedSegments) - 1][3]) - float(excitedSegments[0][2]) < 5 ):
                 for scene in excitedSegments:
                     f1.write( str(scene[0]) + " " + str(scene[1]) + " " +  str(scene[2]) + " " + str(scene[3]) + '\n')
                     if(os.path.isfile(scene[0])):
                         os.remove(scene[0])
                 excitedSegments.clear()
+            
+            elif(len(excitedSegments) > 0 and  float(excitedSegments[len(excitedSegments) - 1][3]) - float(excitedSegments[0][2]) > 15 ):
+                duration = float(excitedSegments[len(excitedSegments) - 1][3]) - float(excitedSegments[0][2])
+                count = 0
+                while(count < duration/2):
+                    scene = excitedSegments.pop()
+                    f1.write( str(scene[0]) + " " + str(scene[1]) + " " +  str(scene[2]) + " " + str(scene[3]) + " del in reverse" + '\n')
+                    if(os.path.isfile(scene[0])):
+                        os.remove(scene[0])
+                    count += float(scene[3]) - float(scene[2])
+                
+                for scene in excitedSegments:
+                    scenes.append([scene[2], scene[3]])
+
+                excitedSegments.clear()
 
             elif( len(excitedSegments) > 0):
                 for scene in excitedSegments:
-                    scenes.append([scene[2]/fps, scene[3]]/fps)
+                    scenes.append([scene[2], scene[3]])
                 excitedSegments.clear()
-
-        if( sceneFiles[index][1] == "SaveTheEnd" ):
-            excitedSegments.append(sceneFiles[index])
     
     for scene in scenes:
         f2.write(str(scene[0]) + ' ' + str(scene[1]) + '\n')
+    
+    # video = VideoFileClip('storage/tmp/matchBordeauxPSG2.mkv')
+    # videoClips = []
+    # for scene in scenes:
+    #     clip = video.subclip(int(scene[0]), int(scene[1]))
+    #     videoClips.append(clip)
+        
+    # finalVideo = concatenate_videoclips(videoClips)
+
+    # # Delete previous highlight video
+    # if(os.path.isfile("storage/tmp/highlights.mp4")):
+    #     os.remove("storage/tmp/highlights.mp4")
+
+    # finalVideo.write_videofile("storage/tmp/highlights.mp4")
 
 
 
@@ -371,6 +402,49 @@ if args.OCR :
 
         #generate_highlights_compare('ocr/highlights_videos', 'secondmatch.mkv', 'ocr/img/times.txt', 10, start_indices)
     else:
+
+        # # Algorithm for choosing the right scenes
+        # near = 1
+        # use = True
+        # final_scenes = []
+        # for i, scene in enumerate(sortedScenes):
+        #     if(use == True):
+        #         if(scene[2] == "audio" and i < len(sortedScenes) - 1 and sortedScenes[i+1][2] == "ocr"):
+        #             if(sortedScenes[i+1][0] < scene[0]):
+        #                 final_scenes.append(sortedScenes[i+1])
+        #             elif( sortedScenes[i+1][0] > scene[0] and sortedScenes[i+1][0] <= scene[1] + near):
+        #                 final_scenes.append(sortedScenes[i+1])
+        #             else:
+        #                 final_scenes.append(scene)
+
+        #         elif(scene[2] == "audio" and i == len(sortedScenes) - 1 and (sortedScenes[i-1][2] == "audio" or sortedScenes[i-1][1] < scene[0] - near)):
+        #             final_scenes.append(scene)
+                
+        #         elif(scene[2] == "audio"):
+        #             final_scenes.append(scene)
+
+        #         elif(scene[2] == "ocr" and i < len(sortedScenes) - 1 and sortedScenes[i+1][2] == "audio"):
+        #             if(sortedScenes[i+1][0] < scene[0]):
+        #                 final_scenes.append(scene)
+        #                 use = False
+        #             elif( sortedScenes[i+1][0] > scene[0] and sortedScenes[i+1][0] <= scene[1] + near):
+        #                 final_scenes.append(sortedScenes[i+1])
+        #             else:
+        #                 final_scenes.append(scene)
+
+        #         elif(scene[2] == "ocr" and i == len(sortedScenes) - 1 and (sortedScenes[i-1][2] == "ocr" or sortedScenes[i-1][1] < scene[0] - near)):
+        #             final_scenes.append(scene)
+                
+        #         elif(scene[2] == "ocr"):
+        #             final_scenes.append(scene)
+
+        #     else:
+        #         use = True
+
+
+
+
+
         allScenes = []
         for scene in scenes:
             allScenes.append([scene[0], scene[1], "audio"])
@@ -380,18 +454,33 @@ if args.OCR :
         sortedScenes = sorted(allScenes, key=lambda scene: scene[1])
 
         # Algorithm for choosing the right scenes
-        near = 1
+        near = 11
         use = True
         final_scenes = []
         for i, scene in enumerate(sortedScenes):
             if(use == True):
                 if(scene[2] == "audio" and i < len(sortedScenes) - 1 and sortedScenes[i+1][2] == "ocr"):
-                    if(sortedScenes[i+1][0] < scene[0]):
-                        final_scenes.append(sortedScenes[i+1])
+                    lenNext = float(sortedScenes[i+1][1]) - float(sortedScenes[i+1][0])
+                    lenCurrent = float(scene[1]) - float(scene[0])
+
+                    if(sortedScenes[i+1][0] < scene[0] ):
+                        if( lenNext > 40 ):
+                            final_scenes.append(scene)
+                            use = False
+                        else:
+                            final_scenes.append(sortedScenes[i+1])
+
                     elif( sortedScenes[i+1][0] > scene[0] and sortedScenes[i+1][0] <= scene[1] + near):
-                        final_scenes.append(sortedScenes[i+1])
+                        if( lenNext > 40 ):
+                            final_scenes.append(scene)
+                            use = False
+                        else:
+                            final_scenes.append(sortedScenes[i+1])
+                    
                     else:
                         final_scenes.append(scene)
+                    # else:
+                    #     continue
 
                 elif(scene[2] == "audio" and i == len(sortedScenes) - 1 and (sortedScenes[i-1][2] == "audio" or sortedScenes[i-1][1] < scene[0] - near)):
                     final_scenes.append(scene)
@@ -401,10 +490,22 @@ if args.OCR :
 
                 elif(scene[2] == "ocr" and i < len(sortedScenes) - 1 and sortedScenes[i+1][2] == "audio"):
                     if(sortedScenes[i+1][0] < scene[0]):
+                        if( lenCurrent > 40 ):
+                            final_scenes.append(sortedScenes[i+1])
+                        else:
+                            final_scenes.append(scene)
+                            use = False
+
                         final_scenes.append(scene)
-                        use = False
+                        use = False # TO PUT SOMEWHERE
+
                     elif( sortedScenes[i+1][0] > scene[0] and sortedScenes[i+1][0] <= scene[1] + near):
-                        final_scenes.append(sortedScenes[i+1])
+                        if( lenCurrent > 40 ):
+                            final_scenes.append(sortedScenes[i+1])
+                        else:
+                            final_scenes.append(scene)
+                            use = False
+                        
                     else:
                         final_scenes.append(scene)
 
