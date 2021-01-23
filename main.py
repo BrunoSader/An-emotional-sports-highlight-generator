@@ -121,10 +121,10 @@ if args.model == 'CNN' :
                     crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
                 if not unexciting_condition :
                     if exciting_condition :
-                        if len(scene_classes) > 8 :
+                        if len(scene_classes) > 10 :
                             for i, item in enumerate(scene_classes[::-1]):
                                 if item[1] == 'Unexcited':
-                                    length = i+3
+                                    length = i+5
                                     if args.OCR :
                                         print((start_frame/fps, end_frame/fps))
                                         start_frame = end_frame - length
@@ -177,9 +177,10 @@ if args.model == 'CNN' :
         crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
     if not unexciting_condition :
         if exciting_condition :
-            if len(scene_classes) > 8 :
+            if len(scene_classes) > 10 :
                 for i, item in enumerate(scene_classes[::-1]):
                     if item[1] == 'Unexcited':
+                        length = i+5
                         if args.OCR :
                             print((start_frame/fps, end_frame/fps))
                             start_frame = end_frame - length
