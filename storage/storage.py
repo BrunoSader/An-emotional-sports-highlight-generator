@@ -140,7 +140,7 @@ if __name__=='__main__' :
     # filesList = list_files(client, bucketName='football_matches')
     # print(filesList)
 
-    upload_folder_content(client, blobName='classification/v5/Train1Sec/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses1SecCuratedExcited/')
+    # upload_folder_content(client, blobName='classification/v5/Train1Sec/', bucketName='football_matches', uploadPath='storage/tmp/AudioClasses1SecCuratedExcited/')
 
     # get_folder_content(client, blobName='classification/v3/AudioClasses/UnexcitedCommentary', bucketName='football_matches', savePath='storage/tmp/AudioClassesUnex/')
 
@@ -149,6 +149,10 @@ if __name__=='__main__' :
     # video_to_audio(video_path='storage/tmp/matchBordeauxPSG2.mkv', audio_path='storage/tmp/audioBordeauxPSG2.wav', delete_video=False)
 
     # extractAllSeconds('storage/tmp/AudioClasses/UnexcitedCommentary/', 'storage/tmp/AudioClasses1Sec/UnexcitedCommentary/')
+
+    video = VideoFileClip('storage/tmp/Montpellier-PSG2.mkv')
+    clip = video.subclip(0,2876)
+    clip.write_videofile("storage/tmp/Montpellier-PSG22.mp4")
 
     
     
