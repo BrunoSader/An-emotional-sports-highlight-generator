@@ -557,7 +557,3 @@ end = time.time()
 
 print("Elapsed time is  {}".format(end-start))
 
-if(os.path.isdir("storage/tmp/tmpMain/")):
-    for filename in os.listdir("storage/tmp/tmpMain/"):
-        filepath = os.path.join("storage/tmp/tmpMain/", filename)
-        os.remove(filepath)
