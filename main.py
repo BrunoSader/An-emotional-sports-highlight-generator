@@ -80,10 +80,22 @@ if(os.path.isfile("storage/tmp/acceptedScenes.txt")):
 if(os.path.isfile("storage/tmp/allScenes.txt")):
     os.remove("storage/tmp/allScenes.txt")
 
+if(os.path.isfile("storage/tmp/prefinalAudioScenes.txt")):
+    os.remove("storage/tmp/prefinalAudioScenes.txt")
+
+if(os.path.isfile("storage/tmp/prefinalOCRScenes.txt")):
+    os.remove("storage/tmp/prefinalOCRScenes.txt")
+
+if(os.path.isfile("storage/tmp/finalScenes.txt")):
+    os.remove("storage/tmp/finalScenes.txt")
+
 f= open("storage/tmp/classByScene.txt","a")
 f1= open("storage/tmp/deletedScenes.txt","a")
 f2= open("storage/tmp/acceptedScenes.txt","a")
 f3= open("storage/tmp/allScenes.txt","a")
+f4= open("storage/tmp/prefinalAudioScenes.txt","a")
+f5= open("storage/tmp/prefinalOCRScenes.txt","a")
+f6= open("storage/tmp/finalScenes.txt","a")
 
 if(os.path.isdir("storage/tmp/tmpMain/")):
     for filename in os.listdir("storage/tmp/tmpMain/"):
@@ -227,14 +239,14 @@ elif args.model == 'HMM' :
                 
                 # Write audio & read with audioclip
                 clip = AudioArrayClip(np.asarray(audioframes), fps=audio.fps)
-                clip.write_audiofile('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav', audio.fps)
-                sceneAudio = AudioFileClip('storage/tmp/tmpMain/sceneTmp' + str(startScene/25) + '-' + str(endScene/25) + ' ' + '.wav')
+                clip.write_audiofile('storage/tmp/tmpMain/sceneTmp' + str(startScene/fps) + '-' + str(endScene/fps) + ' ' + '.wav', audio.fps)
+                sceneAudio = AudioFileClip('storage/tmp/tmpMain/sceneTmp' + str(startScene/fps) + '-' + str(endScene/fps) + ' ' + '.wav')
                 
                 # Getting result action for the scene
-                scene_class, classBySec = classify_scene2(sceneAudio, startScene/25, debug=True)
+                scene_class, classBySec = classify_scene2(sceneAudio, startScene/fps, debug=True)
                 sceneFiles.append(["", scene_class, startScene/fps, endScene/fps])
 
-                f.write(str(startScene/25) + '-' + str(endScene/25) + ' ' + scene_class + '\n')
+                f.write(str(startScene/fps) + '-' + str(endScene/fps) + ' ' + scene_class + '\n')
                 
                 # Append only interesting scenes
                 if(scene_class == "SaveTheEnd"):
@@ -318,7 +330,7 @@ elif args.model == 'HMM' :
             elif(len(excitedSegments) > 0 and  float(excitedSegments[len(excitedSegments) - 1][3]) - float(excitedSegments[0][2]) > 15 ):
                 duration = float(excitedSegments[len(excitedSegments) - 1][3]) - float(excitedSegments[0][2])
                 count = 0
-                while(count < duration/2):
+                while(count + float(excitedSegments[len(excitedSegments) -1 ][3]) - float(excitedSegments[len(excitedSegments) -1 ][2]) < duration/2):
                     scene = excitedSegments.pop()
                     f1.write( str(scene[0]) + " " + str(scene[1]) + " " +  str(scene[2]) + " " + str(scene[3]) + " del in reverse" + '\n')
                     if(os.path.isfile(scene[0])):
@@ -337,20 +349,6 @@ elif args.model == 'HMM' :
     
     for scene in scenes:
         f2.write(str(scene[0]) + ' ' + str(scene[1]) + '\n')
-    
-    # video = VideoFileClip('storage/tmp/matchBordeauxPSG2.mkv')
-    # videoClips = []
-    # for scene in scenes:
-    #     clip = video.subclip(int(scene[0]), int(scene[1]))
-    #     videoClips.append(clip)
-        
-    # finalVideo = concatenate_videoclips(videoClips)
-
-    # # Delete previous highlight video
-    # if(os.path.isfile("storage/tmp/highlights.mp4")):
-    #     os.remove("storage/tmp/highlights.mp4")
-
-    # finalVideo.write_videofile("storage/tmp/highlights.mp4")
 
 
 
@@ -360,6 +358,7 @@ cv2.destroyAllWindows()
 if args.OCR :
     ocr('ocr/img', filename, 'times.txt', video_length)
     OCR_scenes = highlights(readFile('ocr/img/times.txt'), 10)
+    
     if not args.algo:
         print('OCR',OCR_scenes)
         if len(scenes) > len(OCR_scenes) :
@@ -451,6 +450,14 @@ if args.OCR :
         for scene in OCR_scenes:
             allScenes.append([scene[0], scene[1], "ocr"])
 
+
+        for scene in scenes:
+            f4.write( str(scene[0]) + " " + str(scene[1]) + " " + "audio" + '\n')
+
+        for scene in OCR_scenes:
+            f5.write( str(scene[0]) + " " + str(scene[1]) + " " + "ocr" + '\n')
+
+
         sortedScenes = sorted(allScenes, key=lambda scene: scene[1])
 
         # Algorithm for choosing the right scenes
@@ -525,10 +532,13 @@ if args.OCR :
                 filteredScenes.append(scene)
             elif(len(filteredScenes) > 0 and filteredScenes[len(filteredScenes) - 1] != scene):
                 filteredScenes.append(scene)
-        
+
         final_scenes = filteredScenes.copy()
         print(scenes)
         print(final_scenes)
+
+        for scene in final_scenes:
+            f6.write( str(scene[0]) + " " + str(scene[1]) + " " + "final" + '\n')
 
     video = VideoFileClip(filename)
     scenes_count = 0
@@ -546,3 +556,8 @@ for f in files:
 end = time.time()
 
 print("Elapsed time is  {}".format(end-start))
+
+if(os.path.isdir("storage/tmp/tmpMain/")):
+    for filename in os.listdir("storage/tmp/tmpMain/"):
+        filepath = os.path.join("storage/tmp/tmpMain/", filename)
+        os.remove(filepath)
