@@ -12,9 +12,11 @@ from video.scene_detection import detect_scene
 from audio.classification import classify_scene, HMMTrainer, classify_scene2
 from audio.CNN_classifier import predict
 from audio.spectro_analysis import concat_video
-from ocr.final_ocr import ocr
-from ocr.highlights import readFile, highlights
+# from ocr.final_ocr import ocr
+# from ocr.highlights import readFile, highlights
 from moviepy.editor import VideoFileClip, concatenate_videoclips
+
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='CNN', help="CNN, HMM")
@@ -40,7 +42,7 @@ last = None
 frames = []
 audioframes = []
 scenes_count = 0
-threshold = 0.90
+threshold = 0.95
 if args.fifa :
     threshold = 0.95
 
@@ -89,22 +91,22 @@ if(os.path.isfile("storage/tmp/prefinalOCRScenes.txt")):
 if(os.path.isfile("storage/tmp/finalScenes.txt")):
     os.remove("storage/tmp/finalScenes.txt")
 
-f= open("storage/tmp/classByScene.txt","a")
-f1= open("storage/tmp/deletedScenes.txt","a")
-f2= open("storage/tmp/acceptedScenes.txt","a")
-f3= open("storage/tmp/allScenes.txt","a")
-f4= open("storage/tmp/prefinalAudioScenes.txt","a")
-f5= open("storage/tmp/prefinalOCRScenes.txt","a")
-f6= open("storage/tmp/finalScenes.txt","a")
-
+f= open("storage/tmp/classByScene.txt","a+")
+f1= open("storage/tmp/deletedScenes.txt","a+")
+f2= open("storage/tmp/acceptedScenes.txt","a+")
+f3= open("storage/tmp/allScenes.txt","a+")
+f4= open("storage/tmp/prefinalAudioScenes.txt","a+")
+f5= open("storage/tmp/prefinalOCRScenes.txt","a+")
+f6= open("storage/tmp/finalScenes.txt","a+")
 if(os.path.isdir("storage/tmp/tmpMain/")):
     for filename in os.listdir("storage/tmp/tmpMain/"):
         filepath = os.path.join("storage/tmp/tmpMain/", filename)
         os.remove(filepath)
 
 if args.model == 'CNN' :
+    print("Running CNN")
     scene_description = 'Unknown' #used for demo
-    for chunk in audio.iter_chunks(chunksize=fpf) : #simulates audio stream
+    for _, chunk in tqdm(enumerate(audio.iter_chunks(chunksize=fpf))) : #simulates audio stream
         i+=1
         end_frame = i
         (grabbed, frame) = capture.read()
@@ -134,7 +136,7 @@ if args.model == 'CNN' :
                     exciting_condition = counter['Excited'] > 0 or counter['Crowd'] > 0
                     crowd_condition = False
                 else :
-                    exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.80
+                    exciting_condition = counter['Excited'] > 0 and score['Excited'] > 0.6
                     crowd_condition = counter['Crowd'] > 0 and score['Crowd'] > 0.90
                 if not unexciting_condition :
                     if exciting_condition :
@@ -169,6 +171,8 @@ if args.model == 'CNN' :
                     scene_description= 'Unexcited'
                     frames.clear()
                     audioframes.clear()
+                print(scene_description)
+                print(score)
                 start_frame = i
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
